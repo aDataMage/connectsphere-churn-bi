@@ -1,0 +1,17 @@
+version: 2
+
+sources:
+  - name: telco
+    database: focus-appliance-507309-h8
+    schema: telco_churn
+    tables:
+      - name: demographics
+        identifier: raw_demographics
+      - name: services
+        identifier: raw_services
+      - name: status
+        identifier: raw_status
+      - name: location
+        identifier: raw_location
+      - name: population
+        identifier: raw_population

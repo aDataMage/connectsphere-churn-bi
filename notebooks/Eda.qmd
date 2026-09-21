@@ -1,0 +1,1571 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "5517c988",
+   "metadata": {},
+   "source": [
+    "# EDA roadmap - foundational questions\n",
+    "\n",
+    "One quarter of data, 7,043 customers, ~26.5% churned. `Quarter` is a constant in the\n",
+    "source, so **there is no time dimension**: every question below is cross-sectional.\n",
+    "\"Churn over time\" can only be approached through `tenure_in_months` as a proxy for\n",
+    "lifecycle stage, never as a trend.\n",
+    "\n",
+    "Ground rules for every cut below:\n",
+    "- report the **base rate (26.5%) alongside every segment rate** - a segment is only\n",
+    "  interesting relative to it\n",
+    "- report **n per segment**, and treat anything under ~100 customers as directional only\n",
+    "- distinguish **churn rate** (risk within a segment) from **share of churners**\n",
+    "  (where the volume sits). The age finding already shows these disagree.\n",
+    "\n",
+    "---\n",
+    "\n",
+    "\n",
+    "\n",
+    "\n",
+    "\n",
+    "\n",
+    "## 4. Price and perceived value\n",
+    "\n",
+    "- Churn rate across `monthly_charge` deciles. Is the relationship monotonic?\n",
+    "- Charge per service held: does a customer paying a lot *for little* churn more than one\n",
+    "  paying a lot for a lot? (Derive a services count from the boolean flags.)\n",
+    "- Do `total_refunds` and `total_extra_data_charges` > 0 mark unhappy customers?\n",
+    "- `total_charges` is mostly tenure x price - check it is not just re-telling section 2.\n",
+    "\n",
+    "## 7. Geography\n",
+    "\n",
+    "- Churn rate by `city` - top and bottom 10 by rate, with n shown. How much of the spread\n",
+    "  is real and how much is small-sample noise?\n",
+    "- Is there a relationship between zip `population` (density proxy) and churn? Urban\n",
+    "  markets have more competitor choice.\n",
+    "- Do the high-churn cities concentrate in one `churn_category`?\n",
+    "\n",
+    "## 8. Acquisition - offers and referrals\n",
+    "\n",
+    "- Churn rate by `offer` ('offer a'-'offer e', 'none'). Which offers bought loyalty and\n",
+    "  which bought a customer who left anyway?\n",
+    "- Careful: offers are not randomly assigned. Are they concentrated in particular tenure\n",
+    "  or contract groups?\n",
+    "- Does `referred_a_friend` / `number_of_referrals` predict retention? Referrers are\n",
+    "  usually the most engaged customers.\n",
+    "\n",
+    "## 9. Stated reasons - what the churners say\n",
+    "\n",
+    "- Breakdown of `churn_category` and the top `churn_reason` values. How much is\n",
+    "  competitor-driven vs price vs service vs attitude?\n",
+    "- Which categories are **addressable**? Competitor offers and price are commercial\n",
+    "  levers; \"attitude of support person\" is an operational one.\n",
+    "- Does the reason mix differ by segment - do seniors, fiber customers, or month-to-month\n",
+    "  customers leave for different reasons?\n",
+    "\n",
+    "## 10. Value at risk\n",
+    "\n",
+    "- Churn rate weighted by `cltv` and by `monthly_charge`: which segment holds the most\n",
+    "  *revenue* at risk, as opposed to the most customers?\n",
+    "- Is churn concentrated among low-value customers (cheap to lose) or high-value ones?\n",
+    "- Sanity-check `cltv` first - is it a source-supplied prediction rather than an observed\n",
+    "  value? If so, treat it as a vendor artefact, not ground truth.\n",
+    "\n",
+    "## 11. Leakage - what cannot be used to predict\n",
+    "\n",
+    "Everything in `stg_telco__status` is recorded with or after the outcome:\n",
+    "\n",
+    "- `satisfaction_score` and `churn_score` - confirm they separate churners almost\n",
+    "  perfectly. That near-perfection is the tell that they are unusable as features.\n",
+    "- `churn_reason` / `churn_category` - null unless the customer churned; useful for\n",
+    "  *explaining* churn, never for predicting it.\n",
+    "- `customer_status` - another encoding of the target.\n",
+    "- `total_revenue` is derived from the other charge columns, so it is redundant rather\n",
+    "  than leaky.\n",
+    "- Which columns remain that would be known **before** the customer churned? That set is\n",
+    "  the real feature space.\n",
+    "\n",
+    "## 12. Before concluding anything\n",
+    "\n",
+    "- Every headline finding: does it hold inside tenure and contract buckets, or does it\n",
+    "  disappear? (The age finding is the first candidate for this test.)\n",
+    "- Is any finding driven by a segment of fewer than ~100 customers?\n",
+    "- Which two or three findings would actually change what the business does - and what\n",
+    "  would the recommended action be?\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 49,
+   "id": "06636ea4",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import matplotlib.pyplot as plt\n",
+    "import statsmodels.stats as stats"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 95,
+   "id": "729d3bcd",
+   "metadata": {
+    "tags": [
+     "Custom_functions"
+    ]
+   },
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "from statsmodels.stats.contingency_tables import Table2x2\n",
+    "from statsmodels.stats.proportion import proportion_confint, confint_proportions_2indep\n",
+    "\n",
+    "def compare(k1, n1, k2, n2, label1='group', label2='reference'):\n",
+    "    p1, p2 = k1/n1, k2/n2\n",
+    "    ci1 = proportion_confint(k1, n1, method='wilson')\n",
+    "    ci2 = proportion_confint(k2, n2, method='wilson')\n",
+    "    d_ci = confint_proportions_2indep(k1, n1, k2, n2, compare='diff', method='newcomb')\n",
+    "    t = Table2x2(np.array([[k1, n1-k1], [k2, n2-k2]]))\n",
+    "    rr_ci = t.riskratio_confint()\n",
+    "\n",
+    "    print(f\"{label1}:   {p1*100:.1f}%  ({ci1[0]*100:.1f}, {ci1[1]*100:.1f})   n={n1}\")\n",
+    "    print(f\"{label2}:   {p2*100:.1f}%  ({ci2[0]*100:.1f}, {ci2[1]*100:.1f})   n={n2}\")\n",
+    "    print(f\"diff:    {(p1-p2)*100:.1f}pp ({d_ci[0]*100:.1f}, {d_ci[1]*100:.1f})\")\n",
+    "    print(f\"ratio:   {t.riskratio:.2f}x ({rr_ci[0]:.2f}, {rr_ci[1]:.2f})\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "e36611cc",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "True"
+      ]
+     },
+     "execution_count": 2,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "from dotenv import load_dotenv\n",
+    "load_dotenv()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "77af1adf",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "<class 'pandas.DataFrame'>\n",
+      "RangeIndex: 7043 entries, 0 to 7042\n",
+      "Data columns (total 5 columns):\n",
+      " #   Column                Non-Null Count  Dtype  \n",
+      "---  ------                --------------  -----  \n",
+      " 0   customer_id           7043 non-null   str    \n",
+      " 1   gender                7043 non-null   str    \n",
+      " 2   age                   7043 non-null   Int64  \n",
+      " 3   married               7043 non-null   boolean\n",
+      " 4   number_of_dependents  7043 non-null   Int64  \n",
+      "dtypes: Int64(2), boolean(1), str(2)\n",
+      "memory usage: 350.8 KB\n"
+     ]
+    }
+   ],
+   "source": [
+    "from google.cloud import bigquery\n",
+    "import pandas as pd\n",
+    "\n",
+    "client = bigquery.Client(project=\"focus-appliance-507309-h8\")\n",
+    "\n",
+    "df = client.query(\"\"\"\n",
+    "    select * from `dbt_dev.stg_telco__demographics`\n",
+    "\"\"\").to_dataframe()\n",
+    "\n",
+    "df.info()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "id": "eda430f1",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def run_query(query):\n",
+    "  df = client.query(query).to_dataframe()\n",
+    "  return df"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "2db4c132",
+   "metadata": {},
+   "source": [
+    "## 1. Baseline - what am I actually measuring?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "id": "da6fab35",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th>tenure_band</th>\n",
+       "      <th>0 0-3</th>\n",
+       "      <th>1 4-12</th>\n",
+       "      <th>2 13-24</th>\n",
+       "      <th>3 25+</th>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>customer_status</th>\n",
+       "      <th></th>\n",
+       "      <th></th>\n",
+       "      <th></th>\n",
+       "      <th></th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>churned</th>\n",
+       "      <td>597</td>\n",
+       "      <td>440</td>\n",
+       "      <td>294</td>\n",
+       "      <td>538</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>joined</th>\n",
+       "      <td>454</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>stayed</th>\n",
+       "      <td>0</td>\n",
+       "      <td>695</td>\n",
+       "      <td>730</td>\n",
+       "      <td>3295</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "tenure_band      0 0-3  1 4-12  2 13-24  3 25+\n",
+       "customer_status                               \n",
+       "churned            597     440      294    538\n",
+       "joined             454       0        0      0\n",
+       "stayed               0     695      730   3295"
+      ]
+     },
+     "execution_count": 20,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "query = \"\"\"\n",
+    "select\n",
+    "  case\n",
+    "    when se.tenure_in_months <= 3 then '0 0-3'\n",
+    "    when se.tenure_in_months <= 12 then '1 4-12'\n",
+    "    when se.tenure_in_months <= 24 then '2 13-24'\n",
+    "    else '3 25+'\n",
+    "  end as tenure_band,\n",
+    "  st.customer_status\n",
+    "from `focus-appliance-507309-h8.dbt_dev.stg_telco__services` se\n",
+    "join `focus-appliance-507309-h8.dbt_dev.stg_telco__status` st\n",
+    "using(customer_id)\n",
+    "\"\"\"\n",
+    "\n",
+    "df = run_query(query)\n",
+    "pd.pivot_table(df, values=\"tenure_band\", index=\"customer_status\", columns=\"tenure_band\", aggfunc=\"count\", fill_value=0)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "d617d51e",
+   "metadata": {},
+   "source": [
+    "`joined` status only spans a tenure band of 0 - 3 months, and `stayed` starts from month 4. This might be an indication of a onboarding period and might lead to different churn analysis. `churned` status spans all months, hence two seperate analysis will be conducted to on 0-3 months and 4+ months."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 48,
+   "id": "19e9389e",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>customers</th>\n",
+       "      <th>pct_of_churn</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>5992</td>\n",
+       "      <td>0.212</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   customers  pct_of_churn\n",
+       "0       5992         0.212"
+      ]
+     },
+     "execution_count": 48,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# base churn rate\n",
+    "query = \"\"\"\n",
+    "SELECT\n",
+    "  count(*) as customers,\n",
+    "  round(countif(churn_label) / count(*), 3) as pct_of_churn\n",
+    "FROM  `focus-appliance-507309-h8.dbt_dev.stg_telco__status` st\n",
+    "join `focus-appliance-507309-h8.dbt_dev.stg_telco__services` se\n",
+    "using(customer_id)\n",
+    "where se.tenure_in_months > 3\n",
+    "\"\"\"\n",
+    "\n",
+    "run_query(query)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "83d68c7b",
+   "metadata": {},
+   "source": [
+    "## 2. Tenure and lifecycle"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 22,
+   "id": "8e622036",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Text(0.5, 1.0, 'Churn rate drops gradually over the tenure')"
+      ]
+     },
+     "execution_count": 22,
+     "metadata": {},
+     "output_type": "execute_result"
+    },
+    {
+     "data": {
+      "image/png": "iVBORw0KGgoAAAANSUhEUgAAAjcAAAHGCAYAAACIDqqPAAAAOnRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjExLjIsIGh0dHBzOi8vbWF0cGxvdGxpYi5vcmcvgI3uAAAAAAlwSFlzAAAPYQAAD2EBqD+naQAATp5JREFUeJzt3Qe0U1Xa//ENiDRpinjpIojSRkRFEGwIoqJiYVQGbIiKjSKOgDOO46sDMuirImNFZcYGiiA6CHZFFBR7QZFBUHqV3uH812//5+RNcpPcJDflnJPvZ62se3PSdk7KebL3s59dxnEcxwAAAARE2Xw3AAAAIJMIbgAAQKAQ3AAAgEAhuAEAAIFCcAMAAAKF4AYAAAQKwQ0AAAgUghsAABAoBDdI2bPPPmteffVV9lyWPfzww+b9999nP6dp4cKF5oEHHjArV67M6j78+uuv7eNs27Yt4bZC9+mnn9p9snv37nw3BQWA4AYRFi1aZCZOnGgeeeQR89JLL5nPPvvMRBexvueee8zjjz9eUHtOByl9MX/55Zc5e8xbb73VTJo0KWePFzTffvutGTx4sFm8eHFWH+fDDz+0j7Np06aE2wrBF198YT8nO3bsKHbZm2++affJzp0789YGFA6CG4R+5Xbp0sW0aNHCjB8/3nzzzTf2wHr66aebJk2amMmTJxf0ntJBSl/MH3zwQb6bAnjWu+++az8nW7ZsKeg2IP/2y3cDkH//+c9/zPHHH2+DmAULFpj69euHLtu+fbsZNmyYee+998wFF1yQ13YCAJAMghuYa6+91uzatctMnTrV1KlTJ2KPVKpUyTz44IPmxx9/jLmnvvvuO/Pxxx+bGjVqmDPPPNNUrVo14nINbx1xxBGmc+fOEdunTZtm1qxZY6644oqIXJ5q1aqZc889197vnDlzzKGHHmratWtnnnrqKXPaaaeZVq1ambffftv2NDVt2tRuK1OmTIm9Lu7tW7ZsaX/ZzZ8/35xxxhk2oBs7dqzZs2ePvW758uVtcKf2us9FORtPPPGE/T+85+Z3v/tdxPPSPtTlalvlypXNySefbBo1apTUO2zZsmX2eWkIUD1o4QFmss9DfvrpJ/t6qEv+yCOPNCeddJIpW7ZsRN6DLr/hhhvMhg0bzPTp020OhJ5H48aNiz3m2rVrzcyZM+1r1bBhQ9OxY0f7GiVDj6MewKKiInPWWWeZJUuWmNdee81ccskldlt0e/RLe8aMGea3334z119/vQ26//3vf9vr6TWuUqWKfd7t27eP+ZrPnj3b5rq4jxeLu8+uu+66iO3uY/3hD38wtWvXjtiW7OMnouFMvTf69OljatWqVWwf671/yimnmDZt2iS8n0Svr4Zj9Fpdeuml5qCDDkrqMVatWmXzutatW2ffc3rv6b3rSvT6RNP9aDhOHnvsMbu/5KKLLjJ169aNuK7u4/XXX7c/ntQmfZZjKal96bYh1eedqK2pvKeS2Z96r+i11HdS27ZtzXHHHRf3+SI+hqUKnHJs9OG88MILiwU24fRFGm3EiBHmxhtvtEGIuoH1xb98+fKI6wwfPty8+OKLxW779NNPm7vvvjtmLs/tt99uP+xq15QpU8z69evt/b/zzjs28Hn00UftF1P37t3N+eefX+JzdG+vMX8FYP/4xz/sMJtyMuSXX36xeRk66UtFPVU6kLuBjHIEdGB278u9rr4YXdoHzZo1M9dcc439X/lKOq99VJJnnnnGfmGOGTPGHpzOOeecmAnbiZ7H3r17zdVXX22HFfXYs2bNsl/oRx99dETOiZv3oH3ZtWtX2yOngElt1eOHe+GFF+x+UPD31Vdf2QTnY445xgZEiSjI0+ty6qmn2i9v5XApeNJjRufAuO1RO3QdXV/PS7Zu3Rra1z///LN56623TLdu3UyHDh0iEnUVnP3+97+3Bx738fTYCsii6b2o92Q0PT+149dffw1tS/bxk3HAAQeYm2++OWaumg7Cemz9kIgnmde3QoUK9n702YqmbdGP8be//c2+vtrfet//+c9/NocffrjNs0vm9Ymmz4MO1KLPi7vvonNsdP8a7lYw/+STT9rvlgkTJhS7v2Tal04bUnneH330UYltTeU9lWh/KgBVkKUfRfqMKUjTDxd9H5CYngYHBW3ixInKFnbGjh2b9G1atmzp1K1b1xk9enRo27Jly5zKlSs7N954Y8R1q1ev7lx77bXF7uPCCy90mjRpUux+i4qKnLvvvju0bcWKFc6iRYtsGw877DDniy++CF32zDPP2O0zZsxI2F739g0bNnQ+/fTTiPuOZd++fc7FF19srx9+Xd3H/fffX+z6K1eudGrWrOmceeaZzrZt20LbX3rpJXub119/PW7b5s+f7+y///5O37597ePKzp07nd69e9vt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JTC1XZczIwoAgNwhuCkFzXTSjCeJDnCYEQUAQH4Q3JSSVvbWzCfNgArHjCgAAPKDhOIMBThdWxRFVCjWUBQ1bAAAyD2CmwxRINOhyUGZujsAAJAmhqUAAECgENwAAIBAIbgBAACBQnADAAACheAGAAAECsENAAAIFIIbAAAQKAQ3AAAgUAhuAABAoBDcAACAQCG4AQAAgUJwAwAAAoXgBgAABArBDQAACBSCGwAAECgENwAAIFAIbgAAQKAQ3AAAgEAhuAEAAIFCcAMAAAKF4AYAAAQKwQ0AAAgUghsAABAoBDcAACBQCG4AAECgENwAAIBAIbgBAACBQnADAAACheAGAAAECsENAAAIFIIbAAAQKAQ3AAAgUAhuAABAoBDcAACAQCG4AQAAgUJwAwAAAoXgBgAABArBDQAACBSCGwAAECgENwAAIFD2y3cD9uzZYz788EOzatUq07p1a9OyZcukb7tkyRLzzjvvmBYtWph27dpltZ0AAMAf8tpzs379enP88cebvn37mueee8506NDBDBo0KKnb7t6921x44YWmf//+5vnnn896WwEAgD/ktefmtttuM9u3bzfffvutOeCAA8wnn3xiA5wzzzzTdOvWLeFthw8fbnt5du3albP2AgAA78tbz43jOGbChAm210aBjagXR6eSemJmzJhhpk6dasaMGZOj1gIAAL/IW8+N8mU2btxYLMemVatW5osvvoh7uxUrVtiAaPLkyaZq1apJPdbOnTvtybVp06ZStBwAAHhZ3npuFNhIjRo1IrYfeOCBocui7du3z/Tp08dce+21pn379kk/1siRI0316tVDpwYNGpSy9QAAwKvyFtxUqlTJ/t26dWvE9s2bN4cui/bCCy+Yzz//3NSvX9+MHz/enpSUPG/ePPu/hrri5ecoYHJP6jUCAADBlLdhqYYNG5ry5cubxYsXR2zX+SZNmsS8TVFRkTnvvPPs1HHXli1bzNKlS837779vLrvsMlOmTJlit6tQoYI9AQCA4CvjxOvuyIHu3bvb2U5vvfWWPa9aN40aNTJjx441/fr1s9s+/vhjs2bNGtOjR4+Y99GmTRtzyimnmAceeCDpx1XOjYan1ItTrVo140V79znm00XrzerNO0ztqhVNu8YHmnJliwduAAAUik1JHr/zOhV81KhRpmPHjuaiiy6yOTRPP/20DVYuv/zy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qlQxnpXSugXwvG+//dbp1auXc8ghh9gS1VOmTCl2nd27dzuXXnqpXbqiRYsWToUKFZy//e1vTpC8++67dnmOoqIi56ijjnIqVarkDBw40Nm3b1/E9Z544gmncuXKzhFHHOFUqVLFOfPMM+0SH0Gh1/q2225zatWq5bRp08apW7eu06hRI+ett96KuN4333zjNGnSxKlTp45Tr149e50vvvjCCSK9B7p16+aULVvWGTJkSMRl27Ztc3r06GHfE0ceeaR93/zjH/9wguS1115zypQp43Ts2DHitGLFiojr3X///fY7onnz5nY/9OzZ09mxY4cTJHo+V199tX1+bdu2dRo0aODce++9Edf55JNPnPr169vL9L3arFkz54cffnCCYufOncXeC/qu0PHjvvvuC11v48aNTpcuXZwDDjjA7gP9/de//uV4FcFNwEyYMMF59tlnnbVr18YNbu655x57sPv555/t+Xfeecd+0b/xxhtOUDz++OPOZ599Fjr/5Zdf2uAl/EClA7qe9/PPP2/Pr1692jn00EOdm266yQkKBWo6SOmg7R7Yb7jhBqdmzZrO3r177Tb91YH84osvDgV/ffr0cQ477DAbHAXNqFGjnO7du9s166KDm1tuucVp2LChs3LlSnv+pZdesoFA+HspCMGNftAkMmvWLPu8p02bZs9rHR/9ULj99tudILniiiucxo0bO4sXL7bnd+3a5Tz22GMRwY8Cm2uuuSb0WTn33HOd3/3ud06QjRkzxtlvv/1CnwPp16+f/RG4fv360A9DXWf+/PmOFxHcBNTmzZvjBjeKugcNGhSxrVOnTvbgFmT61aFeLdfNN9/sNG3atFjgV716dWfPnj1OUL344ov2wLVp0yZ7fubMmfa98t1334Wuoy8sbYvu4fE7/QpXz9SqVauKBTcK7A466CDn7rvvjriNei4UEAYtuJk3b54N8Ldv317sOn379nWOPfbYiG3Dhg2z+y4o/vOf/9jPgT4P8bz66qvFFmmcM2eO3TZ37lwnqI466ijnggsuiAjy1Js5duzYiM+LeoL/9Kc/OV5EQnGB2bp1q/npp5/MMcccE7G9Xbt25ssvvzRBtX37dptjofwil55vrP2gPAONvwfJf/7zH/Phhx+a5557zvz5z382w4cPtwvHuvtBuRbKs3G5uSZBek9ojZxevXqZxx57zNSuXbvY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OeecY84991xz1113xQyytJ/0nDTbyaVZTXrOHTt2TOmx1PuTaq+XhswUPGp21QknnGAeffRRU65cOdvrBiASPTdAgdNBskuXLvakWVOalaO6OEceeaS5//77k76fSy+91HTu3NnceuuttifhxRdftMFJSVO6NZ1bs54GDRpkeyHUG7FkyRKbf6PH1wyhXNDQmHpD4tGsLM1k0iwuPUflwKjdvXr1ssFGKvQcH3/8cRuchM+WSkT5R3o8XVc5UXqNFCQp9wlAJIIboMCoOJ2bGCyaVvz999/bXBNV5VXdlsGDB5vTTz89dJ0OHToUm06tadya0uzSQVbTnJUQrPsbMmSIDW6U15PofmTgwIG290MBkXp7lGujBOdEOTfRRfwUmOmgH65bt242WTqe7t27J8xZOfvssyMuVy2cdu3a2Snh6lnS+d69e0fcJpl2KKB8+OGHbYCioEoBS0m3+8Mf/mATsSdOnGin4Gv/jx49ulhlZQAsvwAAAAKGqeAAACBQCG4AAECgENwAAIBAIbgBAACBQnADAAACheAGAAAECsENAAAIFIIbAAAQKAQ3AAAgUAhuAABAoBDcAACAQCG4AQAAJkj+H9VREYRk0rctAAAAAElFTkSuQmCC",
+      "text/plain": [
+       "<Figure size 640x480 with 1 Axes>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "# churn rate by tenure > 3\n",
+    "query = \"\"\"\n",
+    "select\n",
+    "  se.tenure_in_months,\n",
+    "  COUNTIF(st.churn_label) as churners,\n",
+    "  COUNT(*) as customers,\n",
+    "  round(COUNTIF(st.churn_label) * 1.0 / COUNT(*),3) as pct_churn\n",
+    "from `focus-appliance-507309-h8.dbt_dev.stg_telco__services` se\n",
+    "join `focus-appliance-507309-h8.dbt_dev.stg_telco__status` st\n",
+    "using(customer_id)\n",
+    "where se.tenure_in_months > 3\n",
+    "group by se.tenure_in_months\n",
+    "\"\"\"\n",
+    "\n",
+    "df = run_query(query)\n",
+    "plt.scatter(df[\"tenure_in_months\"], df[\"pct_churn\"])\n",
+    "plt.xlabel('Tenure in Months')\n",
+    "plt.ylabel('Pct Churn Rate')\n",
+    "plt.title('Churn rate drops gradually over the tenure');"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "9cdbad09",
+   "metadata": {},
+   "source": [
+    "Tenure has a negative correlation with churn."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 23,
+   "id": "c6c5d265",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>tenure_band</th>\n",
+       "      <th>churners</th>\n",
+       "      <th>pct_of_churn</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>1 4-12</td>\n",
+       "      <td>440</td>\n",
+       "      <td>0.346</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>3 25+</td>\n",
+       "      <td>538</td>\n",
+       "      <td>0.423</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>2 13-24</td>\n",
+       "      <td>294</td>\n",
+       "      <td>0.231</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "  tenure_band  churners  pct_of_churn\n",
+       "0      1 4-12       440         0.346\n",
+       "1       3 25+       538         0.423\n",
+       "2     2 13-24       294         0.231"
+      ]
+     },
+     "execution_count": 23,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# - What share of *all churners* sits in the first 12 months?\n",
+    "\n",
+    "query = \"\"\"\n",
+    "select\n",
+    "  case\n",
+    "    when se.tenure_in_months <= 12 then '1 4-12'\n",
+    "    when se.tenure_in_months <= 24 then '2 13-24'\n",
+    "    else '3 25+'\n",
+    "  end as tenure_band,\n",
+    "  count(*) as churners,\n",
+    "  round(count(*) / sum(count(*)) over(), 3) as pct_of_churn\n",
+    "from `focus-appliance-507309-h8.dbt_dev.stg_telco__services` se\n",
+    "join `focus-appliance-507309-h8.dbt_dev.stg_telco__status` st \n",
+    "using(customer_id)\n",
+    "where\n",
+    "  se.tenure_in_months > 3 and st.customer_status = 'churned'\n",
+    "group by tenure_band\n",
+    "\"\"\"\n",
+    "\n",
+    "run_query(query)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "6a996899",
+   "metadata": {},
+   "source": [
+    "## 2. Demographics"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 99,
+   "id": "7efd92d9",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>is_senior</th>\n",
+       "      <th>customers</th>\n",
+       "      <th>churners</th>\n",
+       "      <th>pct_churn</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>False</th>\n",
+       "      <td>False</td>\n",
+       "      <td>5004</td>\n",
+       "      <td>920</td>\n",
+       "      <td>0.184</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>True</th>\n",
+       "      <td>True</td>\n",
+       "      <td>988</td>\n",
+       "      <td>352</td>\n",
+       "      <td>0.356</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "       is_senior  customers  churners  pct_churn\n",
+       "False      False       5004       920      0.184\n",
+       "True        True        988       352      0.356"
+      ]
+     },
+     "execution_count": 99,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# which age group churn more?\n",
+    "query = \"\"\"\n",
+    "SELECT\n",
+    "  if(age < 65, False, True) as is_senior,\n",
+    "  count(*) as customers,\n",
+    "  countif(st.churn_label) as churners,\n",
+    "  round(countif(st.churn_label) / count(*), 3) as pct_churn\n",
+    "FROM `focus-appliance-507309-h8.dbt_dev.stg_telco__demographics` d\n",
+    "join `focus-appliance-507309-h8.dbt_dev.stg_telco__status` st \n",
+    "using(customer_id)\n",
+    "join `focus-appliance-507309-h8.dbt_dev.stg_telco__services` se \n",
+    "using(customer_id)\n",
+    "where se.tenure_in_months > 3\n",
+    "group by is_senior\n",
+    "\"\"\"\n",
+    "\n",
+    "df = run_query(query)\n",
+    "df.rename(index={0:False,1:True})"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 102,
+   "id": "3aed6f00",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "np.int64(352)"
+      ]
+     },
+     "execution_count": 102,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df.loc[(df['is_senior'] == True),'churners'].item()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 106,
+   "id": "ed63638f",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "senior:   35.6%  (32.7, 38.7)   n=988\n",
+      "non-senior:   18.4%  (17.3, 19.5)   n=5004\n",
+      "diff:    17.2pp (14.1, 20.5)\n",
+      "ratio:   1.94x (1.75, 2.15)\n"
+     ]
+    }
+   ],
+   "source": [
+    "compare(\n",
+    "  df.loc[(df['is_senior'] == True),'churners'].item(), df.loc[(df['is_senior'] == True),'customers'].item(), df.loc[(df['is_senior'] == False),'churners'].item(), df.loc[(df['is_senior'] == False),'customers'].item(), 'senior', 'non-senior')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "f5bc3b24",
+   "metadata": {},
+   "source": [
+    "Seniors churn at `35.6%` against `18.4%` — `17.2` ((`95% CI 14.1 to 20.5`))points higher, or `1.93×` the rate (`95% CI 1.74 to 2.14`)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 87,
+   "id": "a153063d",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>is_senior</th>\n",
+       "      <th>churners</th>\n",
+       "      <th>total_churners</th>\n",
+       "      <th>pct_of_churn</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>False</td>\n",
+       "      <td>920</td>\n",
+       "      <td>1272</td>\n",
+       "      <td>0.723</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>True</td>\n",
+       "      <td>352</td>\n",
+       "      <td>1272</td>\n",
+       "      <td>0.277</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   is_senior  churners  total_churners  pct_of_churn\n",
+       "0      False       920            1272         0.723\n",
+       "1       True       352            1272         0.277"
+      ]
+     },
+     "execution_count": 87,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Age composition of churners\n",
+    "\n",
+    "query = \"\"\"\n",
+    "SELECT\n",
+    "  if(d.age < 65, False, True) as is_senior,\n",
+    "  count(*) as churners,\n",
+    "  sum(count(*)) over() as total_churners,\n",
+    "  round(count(*) / sum(count(*)) over(), 3) as pct_of_churn\n",
+    "FROM `focus-appliance-507309-h8.dbt_dev.stg_telco__demographics` d\n",
+    "join `focus-appliance-507309-h8.dbt_dev.stg_telco__status` st \n",
+    "using(customer_id)\n",
+    "join `focus-appliance-507309-h8.dbt_dev.stg_telco__services` se \n",
+    "using(customer_id)\n",
+    "where\n",
+    "  st.customer_status = 'churned' and se.tenure_in_months > 3\n",
+    "group by is_senior\n",
+    "\"\"\"\n",
+    "\n",
+    "run_query(query)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 111,
+   "id": "9f0cf27c",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>married</th>\n",
+       "      <th>customers</th>\n",
+       "      <th>churners</th>\n",
+       "      <th>pct_of_churn</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>True</td>\n",
+       "      <td>3209</td>\n",
+       "      <td>560</td>\n",
+       "      <td>0.175</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>False</td>\n",
+       "      <td>2783</td>\n",
+       "      <td>712</td>\n",
+       "      <td>0.256</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   married  customers  churners  pct_of_churn\n",
+       "0     True       3209       560         0.175\n",
+       "1    False       2783       712         0.256"
+      ]
+     },
+     "execution_count": 111,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "query = \"\"\"\n",
+    "SELECT\n",
+    "  d.married,\n",
+    "  count(*) as customers,\n",
+    "  countif(st.churn_label) as churners,\n",
+    "  round(countif(st.churn_label) / count(*), 3) as pct_of_churn\n",
+    "FROM `focus-appliance-507309-h8.dbt_dev.stg_telco__demographics` d\n",
+    "join `focus-appliance-507309-h8.dbt_dev.stg_telco__status` st \n",
+    "using(customer_id)\n",
+    "join `focus-appliance-507309-h8.dbt_dev.stg_telco__services` se \n",
+    "using(customer_id)\n",
+    "where se.tenure_in_months > 3\n",
+    "group by married\n",
+    "\"\"\"\n",
+    "\n",
+    "df = run_query(query)\n",
+    "df"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 113,
+   "id": "3c8ab881",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "not married:   25.6%  (24.0, 27.2)   n=2783\n",
+      "married:   17.5%  (16.2, 18.8)   n=3209\n",
+      "diff:    8.1pp (6.0, 10.2)\n",
+      "ratio:   1.47x (1.33, 1.62)\n"
+     ]
+    }
+   ],
+   "source": [
+    "compare(\n",
+    "  df.loc[(df['married'] == False),'churners'].item(), df.loc[(df['married'] == False),'customers'].item(), df.loc[(df['married'] == True),'churners'].item(), df.loc[(df['married'] == True),'customers'].item(), 'not married', 'married')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "dd329794",
+   "metadata": {},
+   "source": [
+    "`not married` customers churn at `25.6%` against `17.5%` - `8.1` (`95% CI 6.0 to 10.2`) points higher, or `1.47×` the rate (`95% CI 1.33 to 1.62`)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 89,
+   "id": "28d9668b",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>number_of_dependents</th>\n",
+       "      <th>customer</th>\n",
+       "      <th>churners</th>\n",
+       "      <th>pct_of_churn</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>0</td>\n",
+       "      <td>4484</td>\n",
+       "      <td>1205</td>\n",
+       "      <td>0.269</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>1</td>\n",
+       "      <td>517</td>\n",
+       "      <td>29</td>\n",
+       "      <td>0.056</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>2</td>\n",
+       "      <td>491</td>\n",
+       "      <td>18</td>\n",
+       "      <td>0.037</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>3</td>\n",
+       "      <td>478</td>\n",
+       "      <td>17</td>\n",
+       "      <td>0.036</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>4</td>\n",
+       "      <td>8</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.125</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>5</th>\n",
+       "      <td>5</td>\n",
+       "      <td>8</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.125</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>6</th>\n",
+       "      <td>6</td>\n",
+       "      <td>3</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0.333</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>7</th>\n",
+       "      <td>7</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0.000</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>8</th>\n",
+       "      <td>8</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0.000</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>9</th>\n",
+       "      <td>9</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0.000</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   number_of_dependents  customer  churners  pct_of_churn\n",
+       "0                     0      4484      1205         0.269\n",
+       "1                     1       517        29         0.056\n",
+       "2                     2       491        18         0.037\n",
+       "3                     3       478        17         0.036\n",
+       "4                     4         8         1         0.125\n",
+       "5                     5         8         1         0.125\n",
+       "6                     6         3         1         0.333\n",
+       "7                     7         1         0         0.000\n",
+       "8                     8         1         0         0.000\n",
+       "9                     9         1         0         0.000"
+      ]
+     },
+     "execution_count": 89,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "query = \"\"\"\n",
+    "SELECT\n",
+    "  d.number_of_dependents,\n",
+    "  count(*) as customer,\n",
+    "  countif(st.churn_label) as churners,\n",
+    "  round(countif(st.churn_label) / count(*), 3) as pct_of_churn\n",
+    "FROM `focus-appliance-507309-h8.dbt_dev.stg_telco__demographics` d\n",
+    "join `focus-appliance-507309-h8.dbt_dev.stg_telco__status` st \n",
+    "using(customer_id)\n",
+    "join `focus-appliance-507309-h8.dbt_dev.stg_telco__services` se \n",
+    "using(customer_id)\n",
+    "where se.tenure_in_months > 3\n",
+    "group by d.number_of_dependents\n",
+    "\"\"\"\n",
+    "\n",
+    "run_query(query)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "59d4fa2c",
+   "metadata": {},
+   "source": [
+    "0 dependents churned at a rate of `26.9%`, which is not significantly higher than the overall churn rate of `26.5%`. however, churn rates among customer with dependents seem to be significantly lower, ranging from `5.6%` to `3.6%`. (Dependents count from 4 above is too small to be significant.) This suggests that having dependents may be a factor in churn, but further analysis is needed to determine if this effect persists when controlling for other variables such as contract type and monthly charge."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 118,
+   "id": "27d80cbd",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "query = \"\"\"\n",
+    "SELECT\n",
+    "  if(d.number_of_dependents = 0,'zero-dependents','1-3_dependents') as dependents,\n",
+    "  count(*) as customers,\n",
+    "  countif(st.churn_label) as churners,\n",
+    "  round(countif(st.churn_label) / count(*), 3) as pct_of_churn\n",
+    "FROM `focus-appliance-507309-h8.dbt_dev.stg_telco__demographics` d\n",
+    "join `focus-appliance-507309-h8.dbt_dev.stg_telco__status` st \n",
+    "using(customer_id)\n",
+    "join `focus-appliance-507309-h8.dbt_dev.stg_telco__services` se \n",
+    "using(customer_id)\n",
+    "where se.tenure_in_months > 3 and d.number_of_dependents < 4\n",
+    "group by dependents\n",
+    "\"\"\"\n",
+    "\n",
+    "df = run_query(query)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 119,
+   "id": "64b2ccf8",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "zero-dependents:   26.9%  (25.6, 28.2)   n=4484\n",
+      "1-3_dependents:   4.3%  (3.4, 5.5)   n=1486\n",
+      "diff:    22.6pp (20.8, 24.2)\n",
+      "ratio:   6.24x (4.89, 7.97)\n"
+     ]
+    }
+   ],
+   "source": [
+    "compare(\n",
+    "  df.loc[(df['dependents'] == 'zero-dependents'),'churners'].item(), df.loc[(df['dependents'] == 'zero-dependents'),'customers'].item(), df.loc[(df['dependents'] == '1-3_dependents'),'churners'].item(), df.loc[(df['dependents'] == '1-3_dependents'),'customers'].item(), 'zero-dependents', '1-3_dependents')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 90,
+   "id": "352b00cb",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>gender</th>\n",
+       "      <th>customer</th>\n",
+       "      <th>churners</th>\n",
+       "      <th>pct_of_churn</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>female</td>\n",
+       "      <td>2973</td>\n",
+       "      <td>635</td>\n",
+       "      <td>0.214</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>male</td>\n",
+       "      <td>3019</td>\n",
+       "      <td>637</td>\n",
+       "      <td>0.211</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   gender  customer  churners  pct_of_churn\n",
+       "0  female      2973       635         0.214\n",
+       "1    male      3019       637         0.211"
+      ]
+     },
+     "execution_count": 90,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "query = \"\"\"\n",
+    "SELECT\n",
+    "  d.gender,\n",
+    "  count(*) as customer,\n",
+    "  countif(st.churn_label) as churners,\n",
+    "  round(countif(st.churn_label) / count(*), 3) as pct_of_churn\n",
+    "FROM `focus-appliance-507309-h8.dbt_dev.stg_telco__demographics` d\n",
+    "join `focus-appliance-507309-h8.dbt_dev.stg_telco__status` st \n",
+    "using(customer_id)\n",
+    "join `focus-appliance-507309-h8.dbt_dev.stg_telco__services` se\n",
+    "using(customer_id)\n",
+    "where se.tenure_in_months > 3\n",
+    "group by d.gender\n",
+    "\"\"\"\n",
+    "\n",
+    "run_query(query)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "7fd0daf2",
+   "metadata": {},
+   "source": [
+    "both genders have a churn rate of around `21.3%`, which is consistent with the overall churn rate. This suggests that gender may not be a significant factor in churn, but further analysis is needed to confirm this finding and determine if it persists when controlling for other variables such as contract type and monthly charge."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "1c677942",
+   "metadata": {},
+   "source": [
+    "## 5. Service mix\n",
+    "- Do the streaming flags and `unlimited_data` matter once internet type is held constant?\n",
+    "- Phone-only and internet-only customers: how do they compare to bundled ones?\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 36,
+   "id": "046515d3",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>internet_type</th>\n",
+       "      <th>customer</th>\n",
+       "      <th>churners</th>\n",
+       "      <th>pct_churn</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>none</td>\n",
+       "      <td>1274</td>\n",
+       "      <td>43</td>\n",
+       "      <td>0.034</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>dsl</td>\n",
+       "      <td>1411</td>\n",
+       "      <td>181</td>\n",
+       "      <td>0.128</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>cable</td>\n",
+       "      <td>694</td>\n",
+       "      <td>133</td>\n",
+       "      <td>0.192</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>fiber optic</td>\n",
+       "      <td>2613</td>\n",
+       "      <td>915</td>\n",
+       "      <td>0.350</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "  internet_type  customer  churners  pct_churn\n",
+       "0          none      1274        43      0.034\n",
+       "1           dsl      1411       181      0.128\n",
+       "2         cable       694       133      0.192\n",
+       "3   fiber optic      2613       915      0.350"
+      ]
+     },
+     "execution_count": 36,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# What is the churn rate within each internet type\n",
+    "\n",
+    "query = \"\"\"\n",
+    "SELECT\n",
+    "  se.internet_type,\n",
+    "  count(*) as customer,\n",
+    "  countif(st.churn_label) as churners,\n",
+    "  round(countif(st.churn_label) /  count(*), 3) as pct_churn\n",
+    "FROM `focus-appliance-507309-h8.dbt_dev.stg_telco__services` se\n",
+    "join `focus-appliance-507309-h8.dbt_dev.stg_telco__status` st \n",
+    "using(customer_id)\n",
+    "where se.tenure_in_months > 3\n",
+    "group by se.internet_type\n",
+    "\"\"\"\n",
+    "\n",
+    "run_query(query)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "4d8931c2",
+   "metadata": {},
+   "source": [
+    "`fiber optic` customers have a `35%` churn rate, which is significantly higher than the overall churn rate of `26.5%`. while `dsl` have a `12.8%` churn rate, which is significantly lower than the overall churn rate. An effect of ~ `22.2` percentage points."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 35,
+   "id": "113854e7",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>addon_count</th>\n",
+       "      <th>customers</th>\n",
+       "      <th>churners</th>\n",
+       "      <th>pct_of_churn</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>0</td>\n",
+       "      <td>773</td>\n",
+       "      <td>361</td>\n",
+       "      <td>0.467</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>1</td>\n",
+       "      <td>1241</td>\n",
+       "      <td>441</td>\n",
+       "      <td>0.355</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>2</td>\n",
+       "      <td>1303</td>\n",
+       "      <td>289</td>\n",
+       "      <td>0.222</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>3</td>\n",
+       "      <td>931</td>\n",
+       "      <td>113</td>\n",
+       "      <td>0.121</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>4</td>\n",
+       "      <td>470</td>\n",
+       "      <td>25</td>\n",
+       "      <td>0.053</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   addon_count  customers  churners  pct_of_churn\n",
+       "0            0        773       361         0.467\n",
+       "1            1       1241       441         0.355\n",
+       "2            2       1303       289         0.222\n",
+       "3            3        931       113         0.121\n",
+       "4            4        470        25         0.053"
+      ]
+     },
+     "execution_count": 35,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# whats is the churn rate of individuals with add-ons\n",
+    "\n",
+    "query = \"\"\"\n",
+    "SELECT\n",
+    " addon_count,\n",
+    " COUNT(*) AS customers,\n",
+    " COUNTIF(churn_label) AS churners,\n",
+    " round(COUNTIF(churn_label) / COUNT(churn_label), 3) AS pct_of_churn\n",
+    "FROM\n",
+    "(\n",
+    "  SELECT\n",
+    "  *,\n",
+    "  CAST(online_security AS INT64) + \n",
+    "  CAST(online_backup AS INT64) +\n",
+    "  CAST(device_protection_plan AS INT64) + \n",
+    "  CAST(premium_tech_support AS INT64) AS addon_count\n",
+    "FROM `focus-appliance-507309-h8.dbt_dev.stg_telco__services` se\n",
+    "join `focus-appliance-507309-h8.dbt_dev.stg_telco__status` st \n",
+    "using(customer_id)\n",
+    "WHERE internet_service = True and se.tenure_in_months > 3\n",
+    ")\n",
+    "GROUP BY addon_count\n",
+    "ORDER BY addon_count\n",
+    "\"\"\"\n",
+    "\n",
+    "run_query(query)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "8902d864",
+   "metadata": {},
+   "source": [
+    "`add-on` services (online security, online backup, device protection plan, premium tech support) are associated with lower churn rates. Customers with more add-ons tend to be stickier, suggesting that bundling services may improve retention."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 34,
+   "id": "1e3ecba9",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>streaming_count</th>\n",
+       "      <th>customers</th>\n",
+       "      <th>churners</th>\n",
+       "      <th>pct_of_churn</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>0</td>\n",
+       "      <td>1428</td>\n",
+       "      <td>334</td>\n",
+       "      <td>0.234</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>1</td>\n",
+       "      <td>811</td>\n",
+       "      <td>241</td>\n",
+       "      <td>0.297</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>2</td>\n",
+       "      <td>886</td>\n",
+       "      <td>258</td>\n",
+       "      <td>0.291</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>3</td>\n",
+       "      <td>1593</td>\n",
+       "      <td>396</td>\n",
+       "      <td>0.249</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   streaming_count  customers  churners  pct_of_churn\n",
+       "0                0       1428       334         0.234\n",
+       "1                1        811       241         0.297\n",
+       "2                2        886       258         0.291\n",
+       "3                3       1593       396         0.249"
+      ]
+     },
+     "execution_count": 34,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "query = \"\"\"\n",
+    "SELECT\n",
+    " streaming_count,\n",
+    " COUNT(*) AS customers,\n",
+    " COUNTIF(churn_label) AS churners,\n",
+    " round(COUNTIF(churn_label) / COUNT(churn_label), 3) AS pct_of_churn\n",
+    "FROM\n",
+    "(\n",
+    "  SELECT\n",
+    "  *,\n",
+    "  CAST(streaming_movies AS INT64) + \n",
+    "  CAST(streaming_tv AS INT64) +\n",
+    "  CAST(streaming_music AS INT64) AS streaming_count\n",
+    "FROM `focus-appliance-507309-h8.dbt_dev.stg_telco__services` se\n",
+    "join `focus-appliance-507309-h8.dbt_dev.stg_telco__status` st \n",
+    "using(customer_id)\n",
+    "WHERE internet_service = True and se.tenure_in_months > 3\n",
+    ")\n",
+    "GROUP BY streaming_count\n",
+    "ORDER BY streaming_count\n",
+    "\"\"\"\n",
+    "\n",
+    "run_query(query)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "d1a43a59",
+   "metadata": {},
+   "source": [
+    "customers who don't use any streaming service have a churn rate of `23.4%`, while those who use one or two have a churn rate of around `29.7%`. With customers who use 3 services having a churn rate of `24.9%`."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "078a9466",
+   "metadata": {},
+   "source": [
+    "## 3. Contract, billing and payment\n",
+    "\n",
+    "- Churn rate by `contract` ('month-to-month', 'one year', 'two year'). This is usually\n",
+    "  the single strongest lever - how large is the gap here?\n",
+    "- Churn rate by `payment_method` and by `paperless_billing`. Are these real effects, or\n",
+    "  just proxies for contract type?\n",
+    "- What share of the customer base is month-to-month, and what share of total\n",
+    "  `monthly_charge` does that represent? (Sizes the exposure.)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "f464c27d",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "dbt_attrition (3.13.6.final.0)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.13.6"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

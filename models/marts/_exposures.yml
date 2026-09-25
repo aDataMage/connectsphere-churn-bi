@@ -1,0 +1,33 @@
+exposures:
+
+  - name: churn_story_tableau
+    label: Churn story (Tableau Story Points)
+    type: dashboard
+    maturity: low
+    description: >
+      The linear, presented version of docs/story.md: one Story Point per
+      exhibit, in the order age -> internet type -> contract -> first three
+      months -> cost -> recommendations. Reads pre-aggregated exhibits so every
+      number matches the written story. Plan: docs/tableau_story_plan.md.
+    depends_on:
+      - ref('rpt_story_segments')
+      - ref('rpt_story_cost_estimates')
+    owner:
+      name: Adejori Eniola Emmanuel
+      email: adejorieniola@gmail.com
+
+  - name: churn_analytics_powerbi
+    label: Churn analytics (Power BI)
+    type: dashboard
+    maturity: low
+    description: >
+      The self-directed analytical dashboard: landing, diagnostic and detail
+      pages over a star schema, for slicing churn by any segment. Plan:
+      docs/powerbi_dashboard_plan.md.
+    depends_on:
+      - ref('fct_customer_churn')
+      - ref('dim_geography')
+      - ref('rpt_story_cost_estimates')
+    owner:
+      name: Adejori Eniola Emmanuel
+      email: adejorieniola@gmail.com

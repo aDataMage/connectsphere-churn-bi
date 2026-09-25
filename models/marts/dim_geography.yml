@@ -1,0 +1,29 @@
+models:
+
+  - name: dim_geography
+    description: >
+      One row per zip code: the geography dimension for the Power BI model, built
+      on zip_lookup. density_class uses zip population as a density proxy - there
+      is no area field, so it measures zip size, not people per square mile.
+    columns:
+      - name: zip_code
+        description: Primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: city
+        description: City, lower-cased. One per zip (verified in zip_lookup).
+      - name: latitude
+        description: Zip latitude.
+      - name: longitude
+        description: Zip longitude.
+      - name: population
+        description: Zip population.
+      - name: density_class
+        description: "'rural (<5k)', 'suburban (5k-25k)' or 'urban (25k+)' by zip population."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['rural (<5k)', 'suburban (5k-25k)', 'urban (25k+)', 'unknown']
+      - name: density_class_sort
+        description: Sort order for density_class.

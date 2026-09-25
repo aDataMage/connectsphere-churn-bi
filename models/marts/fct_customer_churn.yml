@@ -1,0 +1,214 @@
+models:
+
+  - name: fct_customer_churn
+    description: >
+      One row per customer (all 7,043, every tenure): the BI-ready customer table
+      behind the Tableau churn story and the Power BI analytical dashboard. Every
+      band, flag and profile score used in the analysis is derived once here.
+      Each band carries a `*_sort` column for ordering. Leakage columns
+      (satisfaction_score, churn_score) are excluded. Most analysis filters to
+      `is_established` (tenure > 3 months), because the 0-3 month band holds no
+      'stayed' customers and is reported separately.
+    columns:
+      - name: customer_id
+        description: Primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: zip_code
+        description: Foreign key to dim_geography.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_geography')
+                field: zip_code
+
+      # who
+      - name: gender
+        description: Customer gender, lower-cased.
+      - name: age
+        description: Age in years.
+      - name: age_group
+        description: "'senior (65+)' or 'under 65'. The senior cut-off follows the jump in churn seen at 65."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['senior (65+)', 'under 65']
+      - name: age_group_sort
+        description: Sort order for age_group (senior first).
+      - name: is_senior
+        description: True where age is 65 or over.
+      - name: married
+        description: Whether the customer is married.
+      - name: number_of_dependents
+        description: Count of dependents.
+      - name: has_dependents
+        description: True where the customer has at least one dependent.
+      - name: number_of_referrals
+        description: Count of referrals the customer made.
+      - name: has_referred
+        description: True where the customer has made at least one referral.
+
+      # when
+      - name: tenure_in_months
+        description: Months with the company.
+      - name: is_established
+        description: >
+          True where tenure is over 3 months. The story's main base (5,992
+          customers); the first three months are a different population.
+      - name: era
+        description: "'new (0-3 months)' or 'established (4+ months)'."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['new (0-3 months)', 'established (4+ months)']
+      - name: era_sort
+        description: Sort order for era.
+      - name: tenure_band
+        description: Tenure band in months.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['0-3', '4-12', '13-24', '25-48', '49+']
+      - name: tenure_band_sort
+        description: Sort order for tenure_band.
+
+      # what
+      - name: phone_service
+        description: Whether the customer has phone service.
+      - name: multiple_lines
+        description: Whether the customer has multiple phone lines.
+      - name: internet_service
+        description: Whether the customer has internet service.
+      - name: internet_type
+        description: >
+          Connection type, with 'no internet' for customers without internet
+          service (the staging model stores the string 'none').
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['no internet', 'dsl', 'cable', 'fiber optic']
+      - name: internet_type_sort
+        description: Sort order for internet_type (no internet, dsl, cable, fiber optic).
+      - name: is_fiber
+        description: True where internet_type is fiber optic.
+      - name: usage
+        description: "Service mix: 'both', 'phone only' or 'internet only'. No customer holds neither."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['both', 'phone only', 'internet only']
+      - name: offer
+        description: Last marketing offer accepted, or 'none'.
+      - name: unlimited_data
+        description: Whether the customer is on unlimited data.
+      - name: avg_monthly_gb_download
+        description: Average monthly download in GB (0 without internet).
+      - name: addon_count
+        description: Count of online security, online backup, device protection and premium tech support (0-4).
+      - name: addon_band
+        description: Add-on band, or 'no internet' where add-ons cannot apply.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['no internet', '0', '1', '2+']
+      - name: addon_band_sort
+        description: Sort order for addon_band.
+      - name: streaming_count
+        description: Count of streaming TV, movies and music (0-3).
+      - name: streaming_band
+        description: Streaming band, or 'no internet'.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['no internet', '0', '1-2', '3']
+      - name: streaming_band_sort
+        description: Sort order for streaming_band.
+
+      # how they are held
+      - name: contract
+        description: Contract term.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['month-to-month', 'one year', 'two year']
+      - name: contract_sort
+        description: Sort order for contract (month-to-month first).
+      - name: is_month_to_month
+        description: True where the contract is month-to-month.
+      - name: payment_method
+        description: Payment method.
+      - name: paperless_billing
+        description: Whether the customer is on paperless billing.
+      - name: monthly_charge
+        description: Current monthly charge, USD.
+      - name: price_band
+        description: >
+          Monthly charge band. Edges are the monthly_charge quintiles among
+          internet customers (58 / 75 / 88 / 100).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['<$58', '$58-75', '$75-88', '$88-100', '$100+']
+      - name: price_band_sort
+        description: Sort order for price_band.
+
+      # profiles
+      - name: stability_score
+        description: married + has dependents (0-2).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1, 2]
+                quote: false
+      - name: trust_score
+        description: committed contract + has referred (0-2).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1, 2]
+                quote: false
+      - name: engagement_score
+        description: >
+          2+ streaming services + 21+ GB a month (0-2), both median splits among
+          internet customers. Null without internet.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1, 2]
+                quote: false
+      - name: story_segment
+        description: >
+          The story's additive segmentation: era · contract · fiber. Twelve leaves;
+          every customer sits in exactly one, so churn shares across them sum to 100%.
+        data_tests:
+          - not_null
+
+      # outcome
+      - name: customer_status
+        description: "'stayed', 'churned' or 'joined'. 'joined' exists only in the 0-3 month band."
+      - name: is_churned
+        description: 1 if the customer churned, else 0. SUM gives churners; AVG gives the churn rate.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+      - name: churn_category
+        description: Reason category recorded at cancellation. Churners only; null for everyone else.
+      - name: churn_reason
+        description: Detailed reason recorded at cancellation, from a fixed list. Churners only.
+      - name: cltv
+        description: Customer lifetime value score from the source system.
+
+      # money
+      - name: lost_monthly_charge
+        description: The monthly charge of a churned customer, else 0. SUM gives monthly billing lost to churn.
+        data_tests:
+          - not_null
+      - name: total_charges
+        description: Total charged to date, USD.
+      - name: total_revenue
+        description: Total revenue to date, USD. Redundant with the other charge columns in the source.

@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>story</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="story_files/libs/clipboard/clipboard.min.js"></script>
+<script src="story_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="story_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="story_files/libs/quarto-html/popper.min.js"></script>
+<script src="story_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="story_files/libs/quarto-html/anchor.min.js"></script>
+<link href="story_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="story_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="story_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="story_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="story_files/libs/bootstrap/bootstrap-215b371544c282197b31c8aa00ce3677.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+
+<section id="fiber-customers-on-month-to-month-contracts-are-two-thirds-of-the-billing-lost-to-churn-and-price-is-not-why-they-leave" class="level1">
+<h1>Fiber customers on month-to-month contracts are two-thirds of the billing lost to churn — and price is not why they leave</h1>
+<!-- SIGNAL: Landing, moved to the top (memo form). Pattern: theme preview, resolved. -->
+<section id="bottom-line" class="level2">
+<h2 class="anchored" data-anchor-id="bottom-line">Bottom line</h2>
+<p>More than two of every three dollars of monthly billing lost to churn this quarter left with one kind of customer: fiber broadband on a month-to-month contract. These customers churn at over twice the DSL rate on the same contract, at the same age, from their first month, and even at the same monthly price. When they leave, they name a competitor more often than DSL customers do and price no more often.</p>
+<p>Age sharpens the picture. Seniors churn at twice the rate of everyone else, and seven in ten of them are on fiber. Their extra churn appears only on month-to-month contracts, where 337 senior fiber customers churn at 78.3%.</p>
+<p>Fiber churn should not be treated as a pricing problem. The work is to find out what competitors are offering fiber customers that we are not.</p>
+<p><strong>The asks</strong> (set out with three more under <a href="#6-possible-recommendations">Possible recommendations</a>)</p>
+<ol type="1">
+<li><strong>Do not answer fiber churn with blanket discounts.</strong> Nothing in this data supports it: at the same price, fiber customers churn far more than DSL customers, and within fiber, churn falls as the bill rises.</li>
+<li><strong>Pull the competitor detail behind fiber cancellations</strong>: which competitor, and which device or offer, from cancellation records or retention-call notes. This dataset holds reason codes but no customer verbatims, and the story cannot be closed without them.</li>
+<li><strong>Test a one-year contract offer on month-to-month fiber accounts, with a holdout group, starting with senior fiber customers.</strong> Committed fiber customers churn at about a third of the month-to-month rate (16.8% against 53.3%), and for seniors the difference is starker (11.7% against 78.3%). But customers who choose contracts may differ from those who don’t. Only a test can tell those two explanations apart.</li>
+</ol>
+<hr>
+<!-- SIGNAL: Setting. Pattern: theme preview (body follows this order). -->
+</section>
+<section id="what-this-covers" class="level2">
+<h2 class="anchored" data-anchor-id="what-this-covers">What this covers</h2>
+<p>This memo follows churn through three questions in turn: who leaves (age), what they bought and why price does not explain it (internet type), and what was holding them (contract). It then covers how early churn starts, what leaving it alone costs, and the possible recommendations that follow.</p>
+<p>The data is one quarter of a telecom customer book: <strong>7,043 customers, of whom 1,869 churned (26.5%)</strong>. It is a single snapshot with no time dimension, so every finding here is an association measured across customers, not a trend over time. Two populations sit inside it and are reported separately where it matters: 1,051 customers in their first three months, who churn at 56.8%, and 5,992 established customers, who churn at 21.2%. Every figure below states its base. The full working is in <code>notebooks/Eda.ipynb</code> and <code>docs/analytics_logs.md</code>.</p>
+<hr>
+<!-- SIGNAL: Interruption / Guilty party (who). Pattern: anchoring. -->
+</section>
+<section id="seniors-churn-at-twice-the-rate-and-seven-in-ten-of-them-are-on-fiber" class="level2">
+<h2 class="anchored" data-anchor-id="seniors-churn-at-twice-the-rate-and-seven-in-ten-of-them-are-on-fiber">1. Seniors churn at twice the rate, and seven in ten of them are on fiber</h2>
+<p><em>Exhibit 1.</em></p>
+<p><img src="img/01_age_tenure.png" width="860" alt="Dot chart of churn rate for seniors and under-65 customers in four tenure bands. 4–12 months: seniors 56.0%, under 65 35.8%. 13–24 months: 49.4% against 24.6%. 25–48 months: 41.3% against 15.9%. 49 months and over: 16.1% against 8.2%. Seniors churn more in every band."></p>
+<details>
+<summary>
+Table view
+</summary>
+<p><em>Base: 5,992 established customers (988 seniors, 5,004 under 65).</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Tenure</th>
+<th style="text-align: right;">Seniors</th>
+<th style="text-align: right;">Under 65</th>
+<th style="text-align: right;">Gap</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>4–12 months</td>
+<td style="text-align: right;">56.0% (166)</td>
+<td style="text-align: right;">35.8% (969)</td>
+<td style="text-align: right;">+20.2 pts</td>
+</tr>
+<tr class="even">
+<td>13–24 months</td>
+<td style="text-align: right;">49.4% (168)</td>
+<td style="text-align: right;">24.6% (856)</td>
+<td style="text-align: right;">+24.8 pts</td>
+</tr>
+<tr class="odd">
+<td>25–48 months</td>
+<td style="text-align: right;">41.3% (281)</td>
+<td style="text-align: right;">15.9% (1,313)</td>
+<td style="text-align: right;">+25.4 pts</td>
+</tr>
+<tr class="even">
+<td>49+ months</td>
+<td style="text-align: right;">16.1% (373)</td>
+<td style="text-align: right;">8.2% (1,866)</td>
+<td style="text-align: right;">+7.9 pts</td>
+</tr>
+<tr class="odd">
+<td>All</td>
+<td style="text-align: right;">35.6% (988)</td>
+<td style="text-align: right;">18.4% (5,004)</td>
+<td style="text-align: right;">+17.2 pts</td>
+</tr>
+</tbody>
+</table>
+</details>
+<p>Seniors (65 and over) churn at 35.6%, against 18.4% for everyone else: 1.94 times the rate (<em>base: 5,992 established customers</em>). They are 16.5% of established customers and 27.7% of established churn. The gap holds at every stage of tenure, from the first year (+20.2 points) to five years and beyond (+7.9 points). Tenure is not what makes the difference: at a common tenure mix the gap is 17.8 points (95% CI 14.7–20.8). Household explains part of it. Seniors are married at the same rate as everyone else, but far fewer have dependents (7.2% against 28.7%). Marriage and dependents combined account for about a quarter of the gap (4.3 of the 17.2 points).</p>
+<p><em>Exhibit 2.</em></p>
+<p><img src="img/02_age_product_mix.png" width="860" alt="Stacked bar chart of what each age group buys. Seniors: 71.4% fiber, 23.8% cable or DSL, 4.9% no internet. Under 65: 38.1% fiber, 37.4% cable or DSL, 24.5% no internet."></p>
+<details>
+<summary>
+Table view
+</summary>
+<p><em>Base: 5,992 established customers. Shares of each age group’s customers.</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Product</th>
+<th style="text-align: right;">Seniors (988)</th>
+<th style="text-align: right;">Under 65 (5,004)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Fiber</td>
+<td style="text-align: right;">71.4%</td>
+<td style="text-align: right;">38.1%</td>
+</tr>
+<tr class="even">
+<td>Cable</td>
+<td style="text-align: right;">8.1%</td>
+<td style="text-align: right;">12.3%</td>
+</tr>
+<tr class="odd">
+<td>DSL</td>
+<td style="text-align: right;">15.7%</td>
+<td style="text-align: right;">25.1%</td>
+</tr>
+<tr class="even">
+<td>No internet</td>
+<td style="text-align: right;">4.9%</td>
+<td style="text-align: right;">24.5%</td>
+</tr>
+</tbody>
+</table>
+</details>
+<p>What seniors buy carries more of it. 71.4% of seniors are on fiber, against 38.1% of everyone else. Only 4.9% of seniors take phone service without internet, against 24.5% of everyone else, and phone-only customers barely churn. Among DSL and fiber customers, product mix accounts for 4.6 of the 12.1 points between seniors and everyone else, about 38% (<em>base: 4,024 DSL and fiber customers</em>). So the senior story leads straight into the fiber story.</p>
+<hr>
+<!-- SIGNAL: Guilty party + Narrow in. Pattern: anchoring (mechanism not established
+     — no linking), then Thought, then Speech. -->
+</section>
+<section id="fiber-loses-customers-that-dsl-keeps-even-at-the-same-price" class="level2">
+<h2 class="anchored" data-anchor-id="fiber-loses-customers-that-dsl-keeps-even-at-the-same-price">2. Fiber loses customers that DSL keeps, even at the same price</h2>
+<p>Fiber customers churn at 35.0% against 12.8% for DSL (<em>base: 4,024 established fiber and DSL customers</em>). The gap holds on every contract: 53.3% against 24.5% on month-to-month, 16.8% against 8.9% on one-year, 5.6% against 2.0% on two-year. Across contracts, fiber churns 2.15 times as often (Mantel-Haenszel; odds ratio 3.10, 95% CI 2.57–3.73). The gap holds for seniors and non-seniors alike (2.60 times, pooled): seniors on fiber churn at 40.6% against 19.4% on DSL, and under-65s at 33.0% against 12.0%. It also holds in the first three months as it does later: fiber is 23.8 points above DSL among new customers and 22.2 points above among established ones.</p>
+<p>The obvious explanation is price. Fiber is the premium product, and I expected the gap to shrink once customers were compared at the same monthly bill. It widened instead.</p>
+<p><em>Exhibit 3.</em></p>
+<p><img src="img/03_price_bands.png" width="860" alt="Dot chart comparing fiber and DSL churn rates in three monthly price bands. At $58–75 fiber churns 45.8% against 9.5% for DSL; at $75–88, 41.2% against 4.2%; at $88–100, 36.2% against 1.8%. The gap is 34 to 37 points in every band, and fiber churn falls as the bill rises."></p>
+<details>
+<summary>
+Table view
+</summary>
+<p><em>Base: 2,496 established fiber and DSL customers in the three price bands where both products are sold.</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Monthly charge</th>
+<th style="text-align: right;">Fiber churn</th>
+<th style="text-align: right;">DSL churn</th>
+<th style="text-align: right;">Gap (95% CI)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>$58–75</td>
+<td style="text-align: right;">45.8%</td>
+<td style="text-align: right;">9.5%</td>
+<td style="text-align: right;">+36.3 pts (29.1–43.4)</td>
+</tr>
+<tr class="even">
+<td>$75–88</td>
+<td style="text-align: right;">41.2%</td>
+<td style="text-align: right;">4.2%</td>
+<td style="text-align: right;">+37.0 pts (32.0–41.3)</td>
+</tr>
+<tr class="odd">
+<td>$88–100</td>
+<td style="text-align: right;">36.2%</td>
+<td style="text-align: right;">1.8%</td>
+<td style="text-align: right;">+34.5 pts (26.3–38.0)</td>
+</tr>
+</tbody>
+</table>
+</details>
+<p>Compared at the same price, the gap is larger than the unadjusted 22 points, not smaller. Within fiber, churn <em>falls</em> as the bill rises: 45.8%, 41.2%, 36.2% across the same three bands. Whatever is driving fiber customers out, it does not look like simple price sensitivity.</p>
+<p>The cancellation records point the same way. When a customer cancels, the reason is recorded from a fixed list. Across the 1,272 established churners, the two most common entries are:</p>
+<blockquote class="blockquote">
+<p>“competitor had better devices” (207)</p>
+<p>“competitor made better offer” (204)</p>
+</blockquote>
+<p>Nearly half of all cancellations (45.4%) fall under a competitor reason. “Price too high” is recorded 53 times. Fiber churners cite a competitor more often than DSL churners do (47.5% against 40.7%). They cite price no more often (10.2% against 11.1%). <em>Base: 1,543 fiber and DSL churners; difference in reason mix p = 0.03.</em></p>
+<p><em>Exhibit 4.</em></p>
+<p><img src="img/04_churn_reasons.png" width="860" alt="Dot chart of the share of fiber and DSL churners by recorded cancellation reason. Competitor: fiber 47.5%, DSL 40.7%. Attitude: fiber 16.1%, DSL 13.4%. Dissatisfaction: fiber 15.8%, DSL 20.2%. Other: fiber 10.4%, DSL 14.7%. Price: fiber 10.2%, DSL 11.1%."></p>
+<details>
+<summary>
+Table view
+</summary>
+<p><em>Base: 1,543 churners - 1,236 fiber, 307 DSL. Shares of each product’s churners.</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Reason category</th>
+<th style="text-align: right;">Fiber</th>
+<th style="text-align: right;">DSL</th>
+<th style="text-align: right;">Difference</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Competitor</td>
+<td style="text-align: right;">47.5%</td>
+<td style="text-align: right;">40.7%</td>
+<td style="text-align: right;">+6.8 pts</td>
+</tr>
+<tr class="even">
+<td>Attitude</td>
+<td style="text-align: right;">16.1%</td>
+<td style="text-align: right;">13.4%</td>
+<td style="text-align: right;">+2.7 pts</td>
+</tr>
+<tr class="odd">
+<td>Dissatisfaction</td>
+<td style="text-align: right;">15.8%</td>
+<td style="text-align: right;">20.2%</td>
+<td style="text-align: right;">−4.4 pts</td>
+</tr>
+<tr class="even">
+<td>Other</td>
+<td style="text-align: right;">10.4%</td>
+<td style="text-align: right;">14.7%</td>
+<td style="text-align: right;">−4.3 pts</td>
+</tr>
+<tr class="odd">
+<td>Price</td>
+<td style="text-align: right;">10.2%</td>
+<td style="text-align: right;">11.1%</td>
+<td style="text-align: right;">−0.9 pts</td>
+</tr>
+</tbody>
+</table>
+</details>
+<p>These are reason codes, not customers’ own words. The dataset holds no verbatims. The codes say <em>who</em> customers left for. They do not say <em>what</em> the competitor offered on fiber that we did not. That is where this story is still incomplete, and it is why the second ask exists.</p>
+<hr>
+<!-- SIGNAL: Guilty party (context). Pattern: taxonomic, then anchoring. -->
+</section>
+<section id="four-month-to-month-segments-hold-88.6-of-all-churn" class="level2">
+<h2 class="anchored" data-anchor-id="four-month-to-month-segments-hold-88.6-of-all-churn">3. Four month-to-month segments hold 88.6% of all churn</h2>
+<p>Split the whole book once, by tenure, then contract, then whether the customer has fiber, and every customer lands in exactly one of twelve segments. Four of the twelve account for nearly all the churn. All four are month-to-month.</p>
+<p><em>Exhibit 5.</em></p>
+<p><img src="img/05_churn_concentration.png" width="860" alt="Horizontal bar chart of each segment's share of all 1,869 churners. Established month-to-month fiber customers hold 42.1%, new month-to-month fiber 17.2%, established month-to-month not-fiber 14.7%, new month-to-month not-fiber 14.7%. Together these four month-to-month segments hold 88.6% of all churn; the eight committed-contract segments hold the remaining 11.4%."></p>
+<details>
+<summary>
+Table view
+</summary>
+<p><em>Base: all 7,043 customers, 1,869 churners.</em></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Segment</th>
+<th style="text-align: right;">Customers</th>
+<th style="text-align: right;">Churn rate</th>
+<th style="text-align: right;">Share of all churn</th>
+<th style="text-align: right;">Cumulative</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Established · month-to-month · fiber</td>
+<td style="text-align: right;">1,475</td>
+<td style="text-align: right;">53.3%</td>
+<td style="text-align: right;">42.1%</td>
+<td style="text-align: right;">42.1%</td>
+</tr>
+<tr class="even">
+<td>New (0–3 months) · month-to-month · fiber</td>
+<td style="text-align: right;">407</td>
+<td style="text-align: right;">78.9%</td>
+<td style="text-align: right;">17.2%</td>
+<td style="text-align: right;">59.2%</td>
+</tr>
+<tr class="odd">
+<td>Established · month-to-month · not fiber</td>
+<td style="text-align: right;">1,132</td>
+<td style="text-align: right;">24.2%</td>
+<td style="text-align: right;">14.7%</td>
+<td style="text-align: right;">73.9%</td>
+</tr>
+<tr class="even">
+<td>New (0–3 months) · month-to-month · not fiber</td>
+<td style="text-align: right;">596</td>
+<td style="text-align: right;">46.0%</td>
+<td style="text-align: right;">14.7%</td>
+<td style="text-align: right;">88.6%</td>
+</tr>
+<tr class="odd">
+<td>The other eight segments (all on one- or two-year contracts)</td>
+<td style="text-align: right;">3,433</td>
+<td style="text-align: right;">6.2%</td>
+<td style="text-align: right;">11.4%</td>
+<td style="text-align: right;">100.0%</td>
+</tr>
+</tbody>
+</table>
+</details>
+<p>Month-to-month customers are half the book (51.3%) and 88.6% of its churn. Fiber accounts for the larger share of that: the two fiber segments together are 26.7% of customers and 59.2% of churn.</p>
+<p>Contract is the first cut that matters. But month-to-month means customers are free to leave. It does not tell us why they do. Fiber is one answer to that question, and age is the other. The senior effect exists <em>only</em> on month-to-month. Seniors on month-to-month churn at 77.3%, against 33.8% for everyone else on month-to-month. On committed contracts the difference disappears: 11.1% against 10.7% on one-year, and 1.9% against 2.7% on two-year (<em>base: 5,992 established customers</em>).</p>
+<p><em>Exhibit 6.</em></p>
+<p><img src="img/06_contract_convergence.png" width="860" alt="Dot chart of fiber customers' churn rate by contract, seniors against under-65. Month-to-month: seniors 78.3%, under 65 45.9%. One year: seniors 11.7%, under 65 18.9%. Two year: seniors 1.0%, under 65 8.1%. The two-year senior rate rests on 2 churners of 197."></p>
+<details>
+<summary>
+Table view
+</summary>
+<p><em>Base: 2,613 established fiber customers.</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Contract</th>
+<th style="text-align: right;">Seniors on fiber</th>
+<th style="text-align: right;">Under 65 on fiber</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Month-to-month</td>
+<td style="text-align: right;">78.3% (264 of 337)</td>
+<td style="text-align: right;">45.9% (522 of 1,138)</td>
+</tr>
+<tr class="even">
+<td>One year</td>
+<td style="text-align: right;">11.7% (20 of 171)</td>
+<td style="text-align: right;">18.9% (78 of 412)</td>
+</tr>
+<tr class="odd">
+<td>Two year</td>
+<td style="text-align: right;">1.0% (2 of 197)</td>
+<td style="text-align: right;">8.1% (29 of 358)</td>
+</tr>
+</tbody>
+</table>
+</details>
+<p>Where the fiber and age effects meet, churn is at its highest. There are 337 senior fiber customers on month-to-month contracts, 5.6% of the established book. They churn at 78.3% and account for 20.8% of all established churn. The same kind of customer churns at 11.7% on a one-year contract and 1.0% on a two-year one, though that last figure rests on 2 churners out of 197 (95% interval 0.3%–3.6%).</p>
+<p>This is the strongest pattern in the data, and also the one most exposed to selection. Customers choose their contract, and the seniors who sign for two years may already be the ones who meant to stay. These rates show where the lever <em>might</em> be, not that pulling it works. That is why the third ask is a test and not a rollout.</p>
+<hr>
+<!-- SIGNAL: Narrow in, continued. Pattern: anchoring. -->
+</section>
+<section id="the-same-customers-leave-from-the-first-month-only-faster" class="level2">
+<h2 class="anchored" data-anchor-id="the-same-customers-leave-from-the-first-month-only-faster">4. The same customers leave from the first month, only faster</h2>
+<p>New customers churn at 56.8% in their first three months (<em>base: 1,051. This band contains no “stayed” customers, only those who left and those who have just joined, so this is the churn rate of a new cohort</em>). The drivers are the same. Contract, internet type, payment method and age each move churn in the same direction in the first three months as afterwards. For none of the four is the difference between the two periods statistically distinguishable, though two come close (internet type and age, both p = 0.06). Early leavers also give the same reasons as later ones (<em>base: 1,869 churners; difference in mix p = 0.40</em>).</p>
+<p><em>Exhibit 7.</em></p>
+<p><img src="img/07_first_months.png" width="860" alt="Slope chart of churn rate by internet type, first three months against established customers. Fiber falls from 76.1% to 35.0%, cable from 58.8% to 19.2%, DSL from 52.3% to 12.8%, no internet from 27.8% to 3.4%. Every product churns faster in the first three months, and the order of the four is the same in both periods."></p>
+<details>
+<summary>
+Table view
+</summary>
+<p><em>Base: all 7,043 customers - 1,051 in their first three months, 5,992 established.</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Internet type</th>
+<th style="text-align: right;">First three months</th>
+<th style="text-align: right;">Established (4+ months)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Fiber</td>
+<td style="text-align: right;">76.1% (422)</td>
+<td style="text-align: right;">35.0% (2,613)</td>
+</tr>
+<tr class="even">
+<td>Cable</td>
+<td style="text-align: right;">58.8% (136)</td>
+<td style="text-align: right;">19.2% (694)</td>
+</tr>
+<tr class="odd">
+<td>DSL</td>
+<td style="text-align: right;">52.3% (241)</td>
+<td style="text-align: right;">12.8% (1,411)</td>
+</tr>
+<tr class="even">
+<td>No internet</td>
+<td style="text-align: right;">27.8% (252)</td>
+<td style="text-align: right;">3.4% (1,274)</td>
+</tr>
+</tbody>
+</table>
+</details>
+<p>The highest churn rate in the book is in this group: new month-to-month fiber customers. There are 407 of them, and 78.9% left. Seniors show the same pattern early: 80.5% of seniors in their first three months leave, against 52.7% of everyone else (<em>base: 1,051</em>). On this evidence, early churn does not look like a separate onboarding problem. It looks like the same problem arriving sooner.</p>
+<hr>
+<!-- SIGNAL: Ante. Pattern: taxonomic. -->
+</section>
+<section id="leaving-it-alone-costs-about-37000-a-month-in-fiber-specific-churn" class="level2">
+<h2 class="anchored" data-anchor-id="leaving-it-alone-costs-about-37000-a-month-in-fiber-specific-churn">5. Leaving it alone costs about $37,000 a month in fiber-specific churn</h2>
+<p><em>Exhibit 8.</em></p>
+<p><img src="img/08_cost_of_inaction.png" width="860" alt="Horizontal bar chart of monthly billing lost to churn, each bar a subset of the one above. All billing lost to churn: $139.1k a month from 1,869 churners. Month-to-month fiber customers: $95.6k, 68.7% of the total. Fiber-specific churn above the DSL rate: $37.4k a month, with a 95% range of $31.5k to $42.9k."></p>
+<details>
+<summary>
+Table view
+</summary>
+<p><em>Base: all 1,869 churners. The fiber-specific row covers the 1,475 established month-to-month fiber customers.</em></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Layer</th>
+<th style="text-align: right;">Churners</th>
+<th style="text-align: right;">Monthly billing lost</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>All billing lost to churn</td>
+<td style="text-align: right;">1,869</td>
+<td style="text-align: right;">$139,131</td>
+</tr>
+<tr class="even">
+<td>Month-to-month fiber customers</td>
+<td style="text-align: right;">1,107</td>
+<td style="text-align: right;">$95,594</td>
+</tr>
+<tr class="odd">
+<td>Fiber-specific: above the DSL month-to-month rate</td>
+<td style="text-align: right;">~425 (358–487)</td>
+<td style="text-align: right;">$37,378 ($31,493–$42,879)</td>
+</tr>
+</tbody>
+</table>
+</details>
+<p>The cost breaks down into three parts.</p>
+<p><strong>Billing already lost.</strong> The month-to-month fiber customers who churned were billing $95,594 a month between them. That is 68.7% of the $139,131 a month lost to churn across the whole book (<em>base: all 1,869 churners</em>). This is actual billing from the <code>monthly_charge</code> field, not an estimate.</p>
+<p><strong>The part attributable to fiber.</strong> Not all of that is recoverable, because month-to-month DSL customers churn too (24.5% among established customers). If the 1,475 established month-to-month fiber customers had churned at the DSL rate, about <strong>425 fewer would have left</strong>, somewhere between 358 and 487 given the uncertainty on the gap. At the average fiber churner’s bill of $88.04, that is about <strong>$37,400 a month</strong> (range $31,500–$42,900).</p>
+<p>Age adds a second, overlapping estimate. If the 337 senior fiber customers on month-to-month had churned at the under-65 rate, about 109 fewer would have left (range 91–126). At their average bill of $89.90, that is about $9,800 a month (range $8,200–$11,300). This sits <em>inside</em> the fiber figure rather than on top of it, so the two must not be added.</p>
+<p><strong>The horizon.</strong> Over twelve months, the fiber-specific figure comes to roughly <strong>$450,000</strong> (range $380,000–$515,000), and the senior share within it to roughly $118,000 (range $98,000–$136,000). Twelve months is an assumption about how long those customers would otherwise have stayed. It is not a measurement.</p>
+<p>Two cautions keep this honest. The fiber–DSL gap is an association. Some of it may reflect who chooses fiber rather than anything fiber itself does, so treat the range as a ceiling on what a fiber-specific fix could recover, not a forecast. With one quarter of data, I also cannot show the loss growing over time. What I can show is that it repeats every month a lost customer stays gone, and that it starts early. Customers who leave in their first three months were billing $61.02 a month on average, against $80.74 for those who leave later. They leave before they have been upsold.</p>
+<hr>
+<!-- SIGNAL: Landing, the ask expanded. -->
+</section>
+<section id="possible-recommendations" class="level2">
+<h2 class="anchored" data-anchor-id="possible-recommendations">6. Possible recommendations</h2>
+<p>These follow from the evidence above and are graded by how strongly it supports each one. None is proven to work: every finding here is an association, so each recommendation comes with the test that would show whether it does. The first three are the asks at the top of this memo.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>#</th>
+<th>Recommendation</th>
+<th>Evidence</th>
+<th>Confidence</th>
+<th>How to test</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>Do not answer fiber churn with blanket discounts</td>
+<td>Fiber churns more than DSL at every matched price, and less as its bill rises; price is cited no more often</td>
+<td>Moderate to high</td>
+<td>Only head-to-head against a non-price offer</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>Find out what competitors offer fiber customers, then answer it</td>
+<td>“Better devices” and “better offer” are the top two reasons; fiber cites competitors more</td>
+<td>Directional</td>
+<td>Pull competitor detail, then pilot a response</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>Offer month-to-month fiber customers a one-year contract, starting with seniors</td>
+<td>53.3% churn on month-to-month against 16.8% on one-year; seniors 78.3% against 11.7%</td>
+<td>Strong pattern, cause untested</td>
+<td>Randomised offer with a holdout group</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>Act in the first three months</td>
+<td>56.8% early churn with the same drivers; new month-to-month fiber at 78.9%</td>
+<td>Moderate</td>
+<td>Randomised onboarding outreach by cohort</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>Review the support experience for seniors</td>
+<td>Senior churners cite “attitude” more (19.6% against 14.7%)</td>
+<td>Low</td>
+<td>Review a sample of interactions before investing</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>Fix the data so the next round can test cause</td>
+<td>No verbatims, one quarter only, no record of offers made</td>
+<td>Enabler</td>
+<td>Not a test: a prerequisite for the others</td>
+</tr>
+</tbody>
+</table>
+<p><strong>1. Do not answer fiber churn with blanket discounts.</strong> A price cut is the reflex response to the fiber gap, and the evidence runs against it. At the same monthly price, fiber churns 34–37 points more than DSL. Within fiber, churn falls as the bill rises. Fiber churners cite price no more often than DSL churners. That does not show price never matters to anyone, only that it is not what separates fiber from DSL. <em>If a discount is tried anyway,</em> run it head-to-head against a non-price offer (recommendation 2 or 3) so the comparison is fair.</p>
+<p><strong>2. Find out what competitors are offering fiber customers, then answer it.</strong> The two most common cancellation reasons are “competitor had better devices” (207) and “competitor made better offer” (204). Fiber churners name a competitor more often than DSL churners do (47.5% against 40.7%). Possible responses include a device-refresh offer at contract renewal, or a matching offer in the retention conversation, but which one depends on what competitors are actually offering. <em>The first step:</em> pull the competitor named and the offer described from cancellation records or retention-call notes. Then pilot the most likely response against a control group.</p>
+<p><strong>3. Offer month-to-month fiber customers a one-year contract, starting with seniors.</strong> Month-to-month holds 88.6% of all churn. Committed fiber customers churn at about a third of the month-to-month rate, and the senior effect disappears entirely on committed contracts. The sharpest case is the 337 senior fiber customers on month-to-month, who churn at 78.3% against 11.7% for seniors on fiber with a one-year contract. What the data cannot say is whether offering a contract <em>causes</em> lower churn, or whether committed customers were simply stayers to begin with. <em>To test it:</em> make the offer to a random half of the segment, hold back the other half, and compare 90-day churn. Starting with seniors puts the test where the gap is widest. The incentive has to cost less than what it keeps: the average bill in this segment is $89.90 a month.</p>
+<p><strong>4. Act in the first three months.</strong> Customers in their first three months churn at 56.8% (<em>base: 1,051</em>), with the same drivers as later. New month-to-month fiber customers churn at 78.9% (<em>base: 407</em>), and new seniors at 80.5% (<em>base: 154</em>). They also leave on smaller bills ($61.02 against $80.74), before any upsell. <em>Possible actions:</em> an onboarding check-in in the first month, and a contract offer before the first renewal. <em>To test it:</em> randomise the outreach by signup cohort.</p>
+<p><strong>5. Review the support experience for senior customers.</strong> Senior churners record “attitude” as their reason more often than everyone else: 19.6% against 14.7%. The attitude category is mostly “attitude of support person” (148 of its 204 established entries). It is the only reason category where the two age groups differ beyond chance at the cell level (z = 2.1), and the overall reason mix does <em>not</em> differ significantly (p = 0.23). This is worth a look, not an investment case. <em>To test it:</em> review a sample of senior support interactions before committing any budget.</p>
+<p><strong>6. Fix the data so the next round can test cause.</strong> Three gaps limit what this analysis could conclude. There are no customer verbatims. There is only one quarter, so no trend can be measured. And there is no record of which retention offers were made to whom, so no offer’s effect can be measured. <em>Actions:</em> capture a free-text cancellation reason and the competitor named, track customer cohorts across quarters, and log every retention offer against the account. Without this, the tests in recommendations 1 to 5 cannot be read.</p>
+<hr>
+</section>
+<section id="appendix" class="level2">
+<h2 class="anchored" data-anchor-id="appendix">Appendix</h2>
+<section id="how-to-read-the-figures" class="level3">
+<h3 class="anchored" data-anchor-id="how-to-read-the-figures">How to read the figures</h3>
+<ul>
+<li>Every churn rate is churners ÷ customers in that segment, and every chart, table and paragraph states its base.</li>
+<li>Rates carry Wilson 95% intervals and differences carry Newcombe intervals. “Pooled” comparisons are Mantel-Haenszel, which compares groups within each level of a second variable and then combines the results. Tests of whether an effect differs across groups use Breslow-Day and likelihood-ratio tests. Differences in reason mix use chi-square.</li>
+<li>Monthly charges are in US dollars. The customer book is entirely in California.</li>
+<li>The charts are rebuilt from the data by <code>notebooks/story_charts.py</code>. The question-by-question findings are in <code>docs/analytics_logs.md</code>.</li>
+</ul>
+</section>
+<section id="what-was-examined-and-left-out-of-this-story" class="level3">
+<h3 class="anchored" data-anchor-id="what-was-examined-and-left-out-of-this-story">What was examined and left out of this story</h3>
+<p>These cuts were run and are documented in the analytics log. They were left out because they do not change the argument above.</p>
+<ul>
+<li><strong>Payment method.</strong> Credit-card payers churn less (11.3% against 28.2% for bank withdrawal, established customers). Part of that is contract mix. The rest does not change the fiber story.</li>
+<li><strong>Paperless billing.</strong> Paperless customers churn at 27.7% against 11.7%, but 54% of that gap is internet type, and among customers with no internet it disappears (+0.2 points). It is a marker of the fiber customer, not a lever.</li>
+<li><strong>Add-ons.</strong> Churn falls steadily with each add-on (46.7% with none, 5.3% with four, internet customers). Within fiber, each add-on adds about $7 to the monthly bill, so add-on effects and price effects cannot be separated there.</li>
+<li><strong>Marriage and dependents.</strong> Combined as a stability score, they account for a quarter of the senior gap (section 1), but only 7% of the contract gap and 7% of the fiber gap. The fiber gap survives, but its size does vary across stability levels (homogeneity p &lt; 0.001). That is worth its own look and was not pursued here.</li>
+<li><strong>Streaming, engagement and gender.</strong> Each has little or no effect on churn.</li>
+<li><strong>Geography.</strong> Cities are too small to rank (1,105 cities, median 4 customers each). Urban zip codes churn more than rural ones (25.0% against 19.0%). This was not pursued further here.</li>
+</ul>
+</section>
+<section id="caveats" class="level3">
+<h3 class="anchored" data-anchor-id="caveats">Caveats</h3>
+<ul>
+<li><strong>Association, not cause.</strong> Every finding here is cross-sectional. Customers choose their contract and their product, so differences between groups may reflect who chooses rather than what the choice does. That is why ask 3 is a test with a holdout group, not a rollout.</li>
+<li><strong>Small cells.</strong> The two-year senior fiber rate (1.0%) rests on 2 churners of
+<ol start="197" type="1">
+<li>Cells under 100 customers are flagged in the analytics log.</li>
+</ol></li>
+<li><strong>No time dimension.</strong> The data is one quarter. Trends, seasonality and compounding cannot be measured from it.</li>
+<li><strong>Reason codes are categories.</strong> They are chosen from a fixed list at cancellation, not recorded in the customer’s own words, and they exist only for customers who churned.</li>
+<li><strong>The 0–3 month band is a different population.</strong> It contains no customers with “stayed” status, so its churn rate is not directly comparable with the established book’s.</li>
+<li><strong>The 12-month revenue figures assume a horizon.</strong> The monthly figures are actual billing. Multiplying them by twelve assumes those customers would have stayed a year.</li>
+</ul>
+</section>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

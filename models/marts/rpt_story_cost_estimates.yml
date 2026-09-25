@@ -1,0 +1,60 @@
+models:
+
+  - name: rpt_story_cost_estimates
+    description: >
+      The cost-of-inaction estimates in docs/story.md section 5: churners and
+      monthly billing above a comparison group's churn rate, with Newcombe 95%
+      ranges. senior_over_under_65 sits inside fiber_over_dsl - never add them.
+      Associations, not forecasts: each range is a ceiling on what a targeted
+      fix could recover. 12-month figures assume a horizon; they are not measured.
+    columns:
+      - name: estimate_id
+        description: Primary key.
+        data_tests:
+          - unique
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['fiber_over_dsl', 'senior_over_under_65']
+      - name: estimate_label
+        description: Plain-language description of the comparison.
+      - name: overlaps_with
+        description: The estimate this one sits inside, if any. Overlapping estimates must not be added.
+      - name: group_customers
+        description: Customers in the group the estimate is about.
+      - name: group_churners
+        description: Churners in that group.
+      - name: group_rate
+        description: The group's churn rate.
+      - name: comparison_customers
+        description: Customers in the comparison group.
+      - name: comparison_churners
+        description: Churners in the comparison group.
+      - name: comparison_rate
+        description: The comparison group's churn rate.
+      - name: rate_gap
+        description: group_rate - comparison_rate.
+      - name: rate_gap_lower
+        description: Newcombe 95% lower bound on the gap.
+      - name: rate_gap_upper
+        description: Newcombe 95% upper bound on the gap.
+      - name: avg_monthly_bill
+        description: Average monthly charge of the churners the estimate is about, USD.
+      - name: excess_churners
+        description: Churners above the comparison rate (group_customers x rate_gap).
+      - name: excess_churners_lower
+        description: Lower bound of excess_churners.
+      - name: excess_churners_upper
+        description: Upper bound of excess_churners.
+      - name: excess_monthly_billing
+        description: excess_churners x avg_monthly_bill, USD a month.
+      - name: excess_monthly_billing_lower
+        description: Lower bound, USD a month.
+      - name: excess_monthly_billing_upper
+        description: Upper bound, USD a month.
+      - name: excess_12_month_billing
+        description: excess_monthly_billing x 12. A horizon assumption, not a measurement.
+      - name: excess_12_month_billing_lower
+        description: Lower bound over 12 months.
+      - name: excess_12_month_billing_upper
+        description: Upper bound over 12 months.

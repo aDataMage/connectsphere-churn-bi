@@ -1,0 +1,63 @@
+models:
+
+  - name: rpt_story_segments
+    description: >
+      Pre-aggregated data for the Tableau churn story: one exhibit per chart in
+      docs/story.md, one row per segment. Each Tableau sheet filters to one
+      exhibit_id. Exhibit 04 counts churners only (read the shares, not the
+      rate); exhibit 08 layers overlap by design (read lost_monthly_charge).
+    columns:
+      - name: segment_key
+        description: exhibit_id and dimension values joined - the grain.
+        data_tests:
+          - unique
+          - not_null
+      - name: exhibit_id
+        description: Matches the exhibit numbers in docs/story.md.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['01', '02', '03', '04', '05', '06', '07', '08']
+      - name: exhibit_name
+        description: Short name of what the exhibit crosses. No narrative - titles live in Tableau.
+      - name: base_population
+        description: Which customers the exhibit counts. Every Tableau caption states it.
+      - name: dim_1_name
+        description: Name of the first dimension.
+      - name: dim_1_value
+        description: Value of the first dimension.
+      - name: dim_1_sort
+        description: Sort order for dim_1_value.
+      - name: dim_2_name
+        description: Name of the second dimension, if any.
+      - name: dim_2_value
+        description: Value of the second dimension, if any.
+      - name: dim_2_sort
+        description: Sort order for dim_2_value (null where the order is by value, e.g. churn reasons).
+      - name: dim_3_name
+        description: Name of the third dimension, if any (exhibit 05 only).
+      - name: dim_3_value
+        description: Value of the third dimension, if any.
+      - name: dim_3_sort
+        description: Sort order for dim_3_value.
+      - name: customers
+        description: Customers in the segment (churners, for exhibit 04).
+      - name: churners
+        description: Churners in the segment.
+      - name: lost_monthly_charge
+        description: Monthly billing of the segment's churners, USD.
+      - name: churn_rate
+        description: churners / customers.
+      - name: churn_rate_lower
+        description: Wilson 95% lower bound on the churn rate.
+      - name: churn_rate_upper
+        description: Wilson 95% upper bound on the churn rate.
+      - name: share_of_exhibit_customers
+        description: The segment's share of the exhibit's customers.
+      - name: share_of_exhibit_churners
+        description: The segment's share of the exhibit's churners (exhibit 05 - share of all churn).
+      - name: share_of_dim_1_customers
+        description: Share of the first dimension's customers (exhibit 02 - what each age group buys).
+      - name: share_of_dim_1_churners
+        description: Share of the first dimension's churners (exhibit 04 - reason mix per product).

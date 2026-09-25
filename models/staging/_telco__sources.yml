@@ -2,6 +2,7 @@ version: 2
 
 sources:
   - name: telco
+    description: churn database for a telecom firm
     database: focus-appliance-507309-h8
     schema: telco_churn
     tables:

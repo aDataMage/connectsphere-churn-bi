@@ -1,0 +1,20 @@
+models:
+  - name: stg_telco__location
+    description: >
+      One row per customer. `Country` and `State` are constants in this extract
+      (United States / California) and `lat_long` duplicates `latitude` and
+      `longitude`; the `Count` column is an artefact of the export. String
+      columns are lower-cased.
+    columns:
+      - name: customer_id
+        description: Primary key. Sourced from `Customer ID`, lower-cased.
+      - name: city
+        description: City of the customer's zip_code. One City can have multiple zip_code
+      - name: zip_code
+        description: >
+          Cast to string so it is never treated as a number and never loses a leading zero. Digits only, so no lower() is applied. Joins to
+          stg_telco__population.
+      - name: latitude
+        description: Latitude of the customer's zip_code. One value per zip_code.
+      - name: longitude
+        description: Longitude of the customer's zip_code. One value per zip_code.

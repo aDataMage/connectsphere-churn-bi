@@ -1,0 +1,81 @@
+models:
+
+  - name: stg_telco__services
+    description: >
+      One row per customer, covering the services subscribed to and the charges
+      billed. `Quarter` is a constant and the `Count` column is an export
+      artefact; both are dropped. String columns are lower-cased; the Yes/No
+      service flags arrive from the seed as booleans and are left as-is.
+    columns:
+      - name: customer_id
+        description: Primary key. Sourced from `Customer ID`, lower-cased.
+      - name: number_of_referrals
+        description: Count of referrals the customer made.
+      - name: tenure_in_months
+        description: Months the customer has been with the company.
+      - name: offer
+        description: >
+          Last marketing offer accepted, lower-cased ('offer a' through
+          'offer e'), or 'none' where no offer was taken.
+      - name: phone_service
+        description: Whether the customer subscribes to home phone service. Boolean.
+      - name: avg_monthly_long_distance_charges
+        description: Average long distance charge per month, in USD. 0 where there is no phone service.
+      - name: multiple_lines
+        description: Whether the customer has multiple phone lines. Boolean.
+      - name: internet_service
+        description: Whether the customer subscribes to internet service. Boolean.
+      - name: internet_type
+        description: >
+          Connection type, lower-cased ('dsl', 'fiber optic', 'cable'), or
+          'none' where there is no internet service.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['dsl','fiber optic', 'cable','none']
+      - name: avg_monthly_gb_download
+        description: Average monthly download volume in GB. 0 where there is no internet service.
+      - name: online_security
+        description: Whether the customer subscribes to the online security add-on. Boolean.
+      - name: online_backup
+        description: Whether the customer subscribes to the online backup add-on. Boolean.
+      - name: device_protection_plan
+        description: Whether the customer subscribes to the device protection plan. Boolean.
+      - name: premium_tech_support
+        description: Whether the customer subscribes to premium tech support. Boolean.
+      - name: streaming_tv
+        description: Whether the customer streams TV over their internet service. Boolean.
+      - name: streaming_movies
+        description: Whether the customer streams movies over their internet service. Boolean.
+      - name: streaming_music
+        description: Whether the customer streams music over their internet service. Boolean.
+      - name: unlimited_data
+        description: Whether the customer is on an unlimited data plan. Boolean.
+      - name: contract
+        description: Contract term, lower-cased ('month-to-month', 'one year', 'two year').
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['month-to-month','one year', 'two year']
+      - name: paperless_billing
+        description: Whether the customer is on paperless billing. Boolean.
+      - name: payment_method
+        description: Payment method, lower-cased ('bank withdrawal', 'credit card', 'mailed check').
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['bank withdrawal','credit card', 'mailed check']
+      - name: monthly_charge
+        description: Current total monthly charge for all services, in USD.
+      - name: total_charges
+        description: Total charged to the customer to date, in USD.
+      - name: total_refunds
+        description: Total refunded to the customer to date, in USD.
+      - name: total_extra_data_charges
+        description: Total charged for data over the plan allowance, in USD.
+      - name: total_long_distance_charges
+        description: Total long distance charges to date, in USD.
+      - name: total_revenue
+        description: >
+          Total revenue from the customer to date, in USD. Derived from the
+          other charge columns in the source, so treat it as redundant.

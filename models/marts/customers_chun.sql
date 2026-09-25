@@ -1,4 +1,4 @@
-/*  
+/*
   Date: 2026-06-16
 
   Created a single customer level table
@@ -8,12 +8,11 @@
 with joined_customers as (
     select
       d.customer_id,
-      d.gender, 
-      d.age, 
-      d.married, 
-      d.number_of_dependents, 
+      d.gender,
+      d.age,
+      d.married,
+      d.number_of_dependents,
       l.zip_code,
-      s.referred_a_friend,
       s.tenure_in_months,
       s.offer,
       s.phone_service,

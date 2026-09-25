@@ -1,7 +1,7 @@
-/* 
+/*
 Date: 2024-06-19
    grain: one row per customer_id
-   dropped: Count columns dropped as they were an artefact of the data_source; `Quarter` is a constant and was dropped
+   dropped: Count columns dropped as they were an artefact of the data_source; `Quarter` is a constant and was dropped; referred_a_friend can be derived from number_of_referrals, hence it is redundant and was dropped
    Columns renamed to be more descriptive and to follow naming conventions
    All string columns are lower-cased at staging for consistency; the Yes/No columns land as booleans from the seed so they are left as-is
 */
@@ -16,7 +16,6 @@ renamed as (
 
     select
         lower(`Customer ID`) as customer_id,
-        `Referred a Friend` as referred_a_friend,
         `Number of Referrals` as number_of_referrals,
         `Tenure in Months` as tenure_in_months,
         lower(`Offer`) as offer,

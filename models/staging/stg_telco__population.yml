@@ -1,0 +1,14 @@
+models:
+
+  - name: stg_telco__population
+    description: >
+      One row per zip_code. `zip_id` carries no information and joins to
+      nothing, so it is dropped along with the export's `Count` column.
+    columns:
+      - name: zip_code
+        description: Primary key. Cast to string to match stg_telco__location.
+        data_tests:
+          - unique
+          - not_null
+      - name: population
+        description: Population of the zip_code. Rolled into zip_lookup downstream.

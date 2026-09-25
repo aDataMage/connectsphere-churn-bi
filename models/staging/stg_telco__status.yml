@@ -1,0 +1,38 @@
+models:
+  - name: stg_telco__status
+    description: >
+      One row per customer, holding churn outcome and post-hoc scoring.
+      `Churn Value` is an encoding of `Churn Label` and `Quarter` is a constant;
+      both are dropped, as is the export's `Count` column. String columns are
+      lower-cased. Most of these columns are outcome data - see the marts layer
+      for which are treated as leakage.
+    columns:
+      - name: customer_id
+        description: Primary key. Sourced from `Customer ID`, lower-cased.
+      - name: customer_status
+        description: Status at the end of the quarter, lower-cased ('churned', 'stayed', 'joined').
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['churned','stayed', 'joined']
+      - name: satisfaction_score
+        description: >
+          Survey score from 1 to 5. Collected alongside the outcome, so it is
+          leakage for churn prediction.
+      - name: churn_label
+        description: Whether the customer churned this quarter. Boolean; the target.
+      - name: churn_score
+        description: >
+          Vendor-supplied churn propensity from 0 to 100. A model output, not an
+          input - leakage for churn prediction.
+      - name: cltv
+        description: Predicted customer lifetime value, in USD.
+      - name: churn_reason
+        description: >
+          Free-text reason given for churning, lower-cased. Null unless the
+          customer churned, so it is leakage for churn prediction.
+      - name: churn_category
+        description: >
+          Grouping of churn_reason, lower-cased ('competitor', 'dissatisfaction',
+          'attitude', 'price', 'other'). Null unless the customer churned, so it
+          is leakage for churn prediction.

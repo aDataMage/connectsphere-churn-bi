@@ -1,0 +1,23 @@
+models:
+  - name: stg_telco__demographics
+    description: >
+      One row per customer. Renames source columns to snake_case, drops the
+      constant `Count` column from the raw export, and drops `Dependents`,
+      `Under 30` and `Senior Citizen` as redundant - age bands are derived
+      downstream from `age`. String columns are lower-cased.
+    columns:
+      - name: customer_id
+        description: Primary key. Sourced from `Customer ID`, lower-cased.
+        data_tests:
+          - unique
+          - not_null
+      - name: gender
+        description: Customer gender, lower-cased ('male'/'female').
+      - name: age
+        description: Customer age in years. `is_senior` is derived from this downstream.
+      - name: married
+        description: Whether the customer is married. Arrives from the seed as a boolean.
+      - name: number_of_dependents
+        description: >
+          Count of dependents living with the customer. The source `Dependents`
+          flag was dropped because it is just this column > 0.

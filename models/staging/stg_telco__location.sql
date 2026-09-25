@@ -1,4 +1,4 @@
-/*  
+/*
 Date: 2024-06-19
 
    grain: one row per customer_id
@@ -20,8 +20,6 @@ renamed as (
 
     select
         lower(`Customer ID`) as customer_id,
-        lower(`Country`) as country,
-        lower(`State`) as state,
         lower(`City`) as city,
         cast(`Zip Code` as string) as zip_code,
         `Latitude` as latitude,

@@ -10,10 +10,7 @@ clean-targets:
   - "dbt_packages"
 
 seeds:
-  # Builds seeds into '<your_schema_name>_raw'
-  telco_churn:
-    +schema: raw
-
+  +enabled: false
 models:
   telco_churn:
     +static_analysis: strict

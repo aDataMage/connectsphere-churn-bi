@@ -53,3 +53,23 @@
 - population has no string columns beyond `zip_code`, so it is unchanged
 
   Follow-up: the `senior_citizen` description in `models\staging\_telco__models.yml` still says the raw values are 'Yes'/'No' strings; they are booleans in the warehouse, so that note (and any planned intermediate-layer cast) is stale
+
+## Marts
+
+### Date: 2026-09-25
+
+  Decision: one shared customer fact, with a separate layer for each dashboard <br>
+
+- `fct_customer_churn` (one row per customer, all 7,043) derives every band, flag and profile score once, so neither BI tool re-derives them and both agree with `docs/story.md`
+- Power BI reads it as a star schema: `fct_customer_churn` + `dim_geography` (one row per zip, built on `zip_lookup`). Bands stay on the fact rather than in their own dimensions: with a single fact table, separate band dimensions add joins with nothing to share
+- The Tableau story reads pre-aggregated exhibits (`rpt_story_segments`, one exhibit per chart in the story) and the cost estimates (`rpt_story_cost_estimates`), because Tableau cannot compute Wilson or Newcombe intervals and the story's numbers must match to the decimal
+- Every band carries a `*_sort` column so BI tools order it correctly (Power BI: Sort by column)
+- Leakage columns (`satisfaction_score`, `churn_score`) are excluded, as in `customers_chun`
+- `internet_type` 'none' is relabelled 'no internet': the staging model stores the string 'none', not NULL, so `IFNULL` handling silently drops those 1,274 customers
+- `is_churned` is an integer so `SUM` counts churners and `AVG` is the churn rate
+- Intervals come from a macro (`macros/confidence_intervals.sql`) that matches statsmodels exactly (verified: fiber gap lower bound 0.2425, excess billing $37,377.80)
+- Exposures (`models/marts/_exposures.yml`) declare both dashboards, so lineage shows what feeds each one
+- `tests/assert_story_parity.sql` checks the story's headline figures against the marts; severity is warn, so a data refresh flags the story as stale without blocking the build
+- `customers_chun` and `zip_lookup` are left unchanged; `customers_chun` overlaps with `fct_customer_churn` and could be retired once nothing reads it
+
+  Output tables: fct_customer_churn `models\marts\fct_customer_churn.sql`, dim_geography `models\marts\dim_geography.sql`, rpt_story_segments `models\marts\rpt_story_segments.sql`, rpt_story_cost_estimates `models\marts\rpt_story_cost_estimates.sql`

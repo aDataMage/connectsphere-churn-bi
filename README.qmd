@@ -1,15 +1,22 @@
-# ConnectSphere churn BI
+---
+title: "ConnectSphere churn BI"
+subtitle: "Where a telecom company's churn actually comes from — and why cutting prices wouldn't fix it"
+author: "Adejori Eniola Emmanuel"
+date: last-modified
+brand: _brand.yml
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    embed-resources: true
+    link-external-newwindow: true
+    fig-align: left
+    mermaid:
+      theme: dark
+---
 
-**Where a telecom company's churn actually comes from — and why cutting prices wouldn't fix it.**
-
-![SQL](https://img.shields.io/badge/SQL-BigQuery-4CC2A5?style=flat-square&labelColor=0F1B2A)
-![dbt](https://img.shields.io/badge/dbt-data_modelling-4CC2A5?style=flat-square&labelColor=0F1B2A)
-![Python](https://img.shields.io/badge/Python-statistics-4CC2A5?style=flat-square&labelColor=0F1B2A)
-![Storytelling](https://img.shields.io/badge/Data-storytelling-4CC2A5?style=flat-square&labelColor=0F1B2A)
-![Tableau](https://img.shields.io/badge/Tableau-story-4CC2A5?style=flat-square&labelColor=0F1B2A)
-![Power BI](https://img.shields.io/badge/Power_BI-dashboard-4CC2A5?style=flat-square&labelColor=0F1B2A)
-
-<img src="docs/img/08_cost_of_inaction.png" width="860" alt="Bar chart of monthly billing lost to churn. All billing lost: $139.1k a month. Month-to-month fiber customers: $95.6k, 68.7% of the total. Fiber-specific churn above the DSL rate: $37.4k a month, range $31.5k to $42.9k.">
+![About \$37,000 a month of lost billing is tied specifically to fiber.](docs/img/08_cost_of_inaction.png){#fig-cost fig-alt="Bar chart of monthly billing lost to churn. All billing lost: $139.1k a month. Month-to-month fiber customers: $95.6k, 68.7% of the total. Fiber-specific churn above the DSL rate: $37.4k a month, range $31.5k to $42.9k."}
 
 ## At a glance
 
@@ -17,7 +24,7 @@
 | --- | --- |
 | **The question** | Why are a telecom company's customers leaving, and what does it cost to do nothing? |
 | **What I found** | Fiber customers on month-to-month contracts carry **68.7% of the monthly billing lost to churn**. They leave for competitors, not over price: at the *same* monthly bill, fiber customers churn 34–37 points more than DSL customers. |
-| **What it's worth** | About **$37,000 a month** of lost billing is tied specifically to fiber — up to roughly **$450,000 a year**. |
+| **What it's worth** | About **\$37,000 a month** of lost billing is tied specifically to fiber (@fig-cost) — up to roughly **\$450,000 a year**. |
 | **What I recommended** | Don't answer with discounts. Find out what competitors offer fiber customers, and test a contract offer against a control group before rolling anything out. |
 | **What I built** | A tested data pipeline (SQL, dbt, BigQuery), the statistical analysis (Python), a written data story, and the plans and data models for a Tableau story and a Power BI dashboard. |
 | **Data** | One quarter of a telecom customer book: 7,043 customers, 1,869 of whom left. |
@@ -30,12 +37,13 @@
 | 📊 | **Tableau story** — the same argument as a presented readout | [Build plan](docs/tableau_story_plan.md) · data models built and tested |
 | 📈 | **Power BI dashboard** — self-serve analysis for repeat use | [Build plan](docs/powerbi_dashboard_plan.md) · data models built and tested |
 
-**If you have five minutes,** read the [data story](docs/story.md) — it is the
-project in the form a decision-maker would receive it.
+::: {.callout-tip appearance="simple"}
+## If you have five minutes
+Read the [data story](docs/story.md). It is the project in the form a
+decision-maker would receive it.
+:::
 
----
-
-## What this project shows about how I work
+## How I work
 
 **I start from the decision, not the data.** The story opens with what should
 be done, who owns it and by when. Every chart has to earn its place by moving
@@ -64,8 +72,6 @@ things: a written story for decision-makers, a linear Tableau readout for a
 meeting, and a Power BI dashboard for analysts who will return to it with
 their own questions.
 
----
-
 ## Skills demonstrated
 
 | Skill | Where to see it |
@@ -81,30 +87,41 @@ their own questions.
 **Tools:** SQL · BigQuery · dbt · Python (pandas, statsmodels, matplotlib) ·
 Jupyter · Tableau · Power BI · DAX · Git · Quarto
 
----
-
 ## The finding, in three charts
 
-**1. Seniors churn at twice the rate — at every stage of their time with the company.**
+::: {.panel-tabset}
 
-<img src="docs/img/01_age_tenure.png" width="860" alt="Dot chart of churn rate for seniors and under-65 customers in four tenure bands. Seniors churn more in every band: 56.0% against 35.8% at 4 to 12 months, falling to 16.1% against 8.2% at 49 months and over.">
+### 1 · Who
 
-**2. Seven in ten seniors are on fiber, and fiber loses customers at any price.** Within fiber, churn even *falls* as the bill rises.
+Seniors churn at twice the rate — at every stage of their time with the
+company (@fig-age).
 
-<img src="docs/img/03_price_bands.png" width="860" alt="Dot chart of fiber and DSL churn in three price bands. At $58 to $75, fiber 45.8% against DSL 9.5%; at $75 to $88, 41.2% against 4.2%; at $88 to $100, 36.2% against 1.8%.">
+![Seniors churn at about twice the rate, at every stage of tenure.](docs/img/01_age_tenure.png){#fig-age fig-alt="Dot chart of churn rate for seniors and under-65 customers in four tenure bands. Seniors churn more in every band: 56.0% against 35.8% at 4 to 12 months, falling to 16.1% against 8.2% at 49 months and over."}
 
-**3. It all bites on month-to-month contracts,** where 337 senior fiber customers churn at 78.3%.
+### 2 · What
 
-<img src="docs/img/06_contract_convergence.png" width="860" alt="Dot chart of fiber customers' churn rate by contract. Seniors: 78.3% on month-to-month, 11.7% on one-year, 1.0% on two-year. Under 65: 45.9%, 18.9% and 8.1%.">
+Seven in ten seniors are on fiber, and fiber loses customers at any price.
+Within fiber, churn even *falls* as the bill rises (@fig-price).
 
----
+![At the same monthly price, fiber customers churn far more than DSL.](docs/img/03_price_bands.png){#fig-price fig-alt="Dot chart of fiber and DSL churn in three price bands. At $58 to $75, fiber 45.8% against DSL 9.5%; at $75 to $88, 41.2% against 4.2%; at $88 to $100, 36.2% against 1.8%."}
 
-<details>
-<summary><strong>Under the hood — for technical reviewers</strong></summary>
+### 3 · Where
 
-### Pipeline
+It all bites on month-to-month contracts, where 337 senior fiber customers
+churn at 78.3% (@fig-contract).
 
-```mermaid
+![Senior fiber customers churn at 78% on month-to-month and 1% on two-year.](docs/img/06_contract_convergence.png){#fig-contract fig-alt="Dot chart of fiber customers' churn rate by contract. Seniors: 78.3% on month-to-month, 11.7% on one-year, 1.0% on two-year. Under 65: 45.9%, 18.9% and 8.1%."}
+
+:::
+
+## Under the hood
+
+::: {.callout-note collapse="true"}
+## For technical reviewers: pipeline, method and repository
+
+```{mermaid}
+%%| label: fig-lineage
+%%| fig-cap: "From raw data to both dashboards."
 flowchart LR
     A[("Raw CSVs")] --> B[("BigQuery<br/>raw tables")]
     B --> C["dbt staging<br/>clean · typed · tested"]
@@ -125,18 +142,12 @@ flowchart LR
   analysis exactly: [`macros/confidence_intervals.sql`](macros/confidence_intervals.sql).
 - **Both dashboards declared as dbt exposures,** so the lineage shows what
   feeds each one: [`models/marts/_exposures.yml`](models/marts/_exposures.yml).
-
-### Method
-
-- The main analysis covers the 5,992 customers past their first three months.
-  The first three months are a different population — no customer there has a
-  "stayed" status — so they are reported separately.
-- Each effect was checked against its obvious confounder with Mantel-Haenszel
-  pooled comparisons, direct standardisation, Kitagawa decomposition and
-  likelihood-ratio tests for interaction.
-- The data is one quarter, cross-sectional: no trends, and no causal claims.
-
-### Repository
+- **Method.** The main analysis covers the 5,992 customers past their first
+  three months; the first three months hold no "stayed" customers, so they are
+  reported separately. Each effect was checked against its obvious confounder
+  with Mantel-Haenszel pooled comparisons, direct standardisation, Kitagawa
+  decomposition and likelihood-ratio tests for interaction. The data is one
+  quarter, cross-sectional: no trends, and no causal claims.
 
 ```text
 models/      staging views and marts, one YAML per model
@@ -146,11 +157,10 @@ notebooks/   Eda.ipynb (analysis) · story_charts.py (rebuilds every chart)
 docs/        the data story, both dashboard plans, the logs, charts
 seeds/       the five raw CSVs
 ```
+:::
 
-</details>
-
-<details>
-<summary><strong>Run it yourself</strong></summary>
+::: {.callout-note collapse="true"}
+## Run it yourself
 
 **Needs:** Python 3.13, a Google Cloud project with BigQuery, and a
 service-account key.
@@ -162,19 +172,31 @@ service-account key.
    `notebooks/Eda.ipynb` and `notebooks/story_charts.py`.
 3. Install and build:
 
-   ```bash
-   python -m venv dbt_attrition
-   source dbt_attrition/bin/activate    # Windows: .\dbt_attrition\Scripts\Activate.ps1
-   pip install -r requirements.txt
-   dbt deps && dbt build
-   ```
+::: {.panel-tabset}
+
+#### macOS / Linux
+
+```bash
+python -m venv dbt_attrition
+source dbt_attrition/bin/activate
+pip install -r requirements.txt
+dbt deps && dbt build
+```
+
+#### Windows (PowerShell)
+
+```powershell
+python -m venv dbt_attrition
+.\dbt_attrition\Scripts\Activate.ps1
+pip install -r requirements.txt
+dbt deps; dbt build
+```
+
+:::
 
 4. Add a `telco_churn` BigQuery profile to `~/.dbt/profiles.yml`, and a `.env`
    with `GOOGLE_APPLICATION_CREDENTIALS=<path-to-key.json>` for the notebook.
-
-</details>
-
----
+:::
 
 ## About me
 

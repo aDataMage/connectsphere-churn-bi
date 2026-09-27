@@ -63,9 +63,9 @@ not rollouts.
 
 **I catch problems before they reach a dashboard.** The source data marks
 "no internet" with the text `'none'` rather than leaving it blank. Standard
-null handling silently dropped **1,274 customers** until I traced it. I also
-wrote a check that fails loudly if the published numbers ever drift from the
-story's.
+null handling silently dropped **1,274 customers** from an analysis until I
+traced it. I also wrote a check that flags it the moment the published numbers
+drift from the story's.
 
 **I match the format to the audience.** The same analysis becomes three
 things: a written story for decision-makers, a linear Tableau readout for a

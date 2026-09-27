@@ -1,0 +1,43 @@
+# Slate - the personal design system, as a Quarto brand file (Quarto 1.6+).
+# README.qmd picks this up; any other Quarto document can point at it with
+# `brand: _brand.yml`.
+
+meta:
+  name: Adejori Eniola Emmanuel
+  link:
+    github: https://github.com/aDataMage
+
+color:
+  palette:
+    slate: "#0F1B2A"         # base
+    slate-mid: "#152436"     # cards
+    slate-light: "#1B3049"   # hover, gradient end
+    mint: "#4CC2A5"          # the accent - one per page
+    ink: "#F2F6FA"           # text primary   15.98:1 on slate
+    mist: "#8FA6BC"          # text secondary  6.90:1 on slate
+    rule: "#3D4B5C"          # borders and gridlines only - 1.95:1, never text
+  background: slate
+  foreground: ink
+  primary: mint
+  secondary: mist
+  dark: slate
+  light: ink
+
+typography:
+  fonts:
+    - family: Source Serif 4
+      source: google
+    - family: Inter
+      source: google
+    - family: JetBrains Mono
+      source: google
+  base:
+    family: Inter
+    line-height: 1.6
+  headings:
+    family: Source Serif 4
+    weight: 600
+    line-height: 1.2
+  monospace: JetBrains Mono
+  link:
+    color: mint

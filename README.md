@@ -27,7 +27,7 @@
 | | Deliverable | Status |
 | --- | --- | --- |
 | 📄 | **[The data story](docs/story.md)** — the full argument in six sections, from who leaves to what to do about it | Complete |
-| 📊 | **Tableau story** — the same argument as a presented readout | [Build plan](docs/tableau_story_plan.md) · data models built and tested |
+| 📊 | **Tableau story** — the same argument as a presented readout | [Report](https://public.tableau.com/views/telco_churn_17905093222320/ChurnStory?:language=en-US&publish=yes&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link) · data models built and tested · report built |
 | 📈 | **Power BI dashboard** — self-serve analysis for repeat use | [Build plan](docs/powerbi_dashboard_plan.md) · data models built and tested |
 
 **If you have five minutes,** read the [data story](docs/story.md) — it is the
@@ -55,9 +55,9 @@ not rollouts.
 
 **I catch problems before they reach a dashboard.** The source data marks
 "no internet" with the text `'none'` rather than leaving it blank. Standard
-null handling silently dropped **1,274 customers** until I traced it. I also
-wrote a check that fails loudly if the published numbers ever drift from the
-story's.
+null handling silently dropped **1,274 customers** from an analysis until I
+traced it. I also wrote a check that flags it the moment the published numbers
+drift from the story's.
 
 **I match the format to the audience.** The same analysis becomes three
 things: a written story for decision-makers, a linear Tableau readout for a
@@ -75,7 +75,7 @@ their own questions.
 | **Statistical analysis** — confidence intervals, confounder adjustment, interaction tests | [`notebooks/Eda.ipynb`](notebooks/Eda.ipynb) |
 | **Data storytelling** — a structured narrative ending in owned, dated recommendations | [`docs/story.md`](docs/story.md) |
 | **Data visualisation** — branded charts, colour-blind-safe palette validated by test | [`docs/img/`](docs/img/), [`notebooks/story_charts.py`](notebooks/story_charts.py) |
-| **BI and dashboard design** — Tableau and Power BI plans, DAX measures, themes | [Tableau plan](docs/tableau_story_plan.md), [Power BI plan](docs/powerbi_dashboard_plan.md) |
+| **BI and dashboard design** — Tableau and Power BI plans, DAX measures, themes | [Tableau Report](https://public.tableau.com/views/telco_churn_17905093222320/ChurnStory?:language=en-US&publish=yes&:sid=&:display_count=n&:origin=viz_share_link), [Power BI plan](docs/powerbi_dashboard_plan.md) |
 | **Documentation** — every modelling decision and every analytical question logged | [Decision log](docs/decision_logs.md), [analytics log](docs/analytics_logs.md) |
 
 **Tools:** SQL · BigQuery · dbt · Python (pandas, statsmodels, matplotlib) ·

@@ -19,7 +19,7 @@
 | **What I found** | Fiber customers on month-to-month contracts carry **68.7% of the monthly billing lost to churn**. They leave for competitors, not over price: at the *same* monthly bill, fiber customers churn 34–37 points more than DSL customers. |
 | **What it's worth** | About **$37,000 a month** of lost billing is tied specifically to fiber — up to roughly **$450,000 a year**. |
 | **What I recommended** | Don't answer with discounts. Find out what competitors offer fiber customers, and test a contract offer against a control group before rolling anything out. |
-| **What I built** | A tested data pipeline (SQL, dbt, BigQuery), the statistical analysis (Python), a written data story, and the plans and data models for a Tableau story and a Power BI dashboard. |
+| **What I built** | A tested data pipeline (SQL, dbt, BigQuery), the statistical analysis (Python), a written data story, and a live Tableau story and Power BI dashboard. |
 | **Data** | One quarter of a telecom customer book: 7,043 customers, 1,869 of whom left. |
 
 ## Read the work
@@ -27,8 +27,8 @@
 | | Deliverable | Status |
 | --- | --- | --- |
 | 📄 | **[The data story](docs/story.md)** — the full argument in six sections, from who leaves to what to do about it | Complete |
-| 📊 | **Tableau story** — the same argument as a presented readout | [Report](https://public.tableau.com/views/telco_churn_17905093222320/ChurnStory?:language=en-US&publish=yes&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link) · data models built and tested · report built |
-| 📈 | **Power BI dashboard** — self-serve analysis for repeat use | [Build plan](docs/powerbi_dashboard_plan.md) · data models built and tested |
+| 📊 | **[Tableau story](https://public.tableau.com/views/telco_churn_17905093222320/ChurnStory)** — the same argument as a presented readout | Live · [build plan](docs/tableau_story_plan.md) |
+| 📈 | **[Power BI dashboard](https://app.powerbi.com/view?r=eyJrIjoiMDA3ZTlhMDAtOTcxNi00NWRhLTgzMDgtYzNhNmY4NjEyZGQ5IiwidCI6IjQ2MTFmNDcxLTA4NWEtNGIwMC04YTMwLTZmYzU3MzRjYWM3NSJ9&pageName=c856c8a0c0924742a3e7)** — self-serve analysis for repeat use | Live · [build plan](docs/powerbi_dashboard_plan.md) |
 
 **If you have five minutes,** read the [data story](docs/story.md) — it is the
 project in the form a decision-maker would receive it.
@@ -75,7 +75,7 @@ their own questions.
 | **Statistical analysis** — confidence intervals, confounder adjustment, interaction tests | [`notebooks/Eda.ipynb`](notebooks/Eda.ipynb) |
 | **Data storytelling** — a structured narrative ending in owned, dated recommendations | [`docs/story.md`](docs/story.md) |
 | **Data visualisation** — branded charts, colour-blind-safe palette validated by test | [`docs/img/`](docs/img/), [`notebooks/story_charts.py`](notebooks/story_charts.py) |
-| **BI and dashboard design** — Tableau and Power BI plans, DAX measures, themes | [Tableau Report](https://public.tableau.com/views/telco_churn_17905093222320/ChurnStory?:language=en-US&publish=yes&:sid=&:display_count=n&:origin=viz_share_link), [Power BI plan](docs/powerbi_dashboard_plan.md) |
+| **BI and dashboard design** — a Tableau story and a Power BI dashboard, DAX measures, themes | [Tableau story](https://public.tableau.com/views/telco_churn_17905093222320/ChurnStory), [Power BI dashboard](https://app.powerbi.com/view?r=eyJrIjoiMDA3ZTlhMDAtOTcxNi00NWRhLTgzMDgtYzNhNmY4NjEyZGQ5IiwidCI6IjQ2MTFmNDcxLTA4NWEtNGIwMC04YTMwLTZmYzU3MzRjYWM3NSJ9&pageName=c856c8a0c0924742a3e7) |
 | **Documentation** — every modelling decision and every analytical question logged | [Decision log](docs/decision_logs.md), [analytics log](docs/analytics_logs.md) |
 
 **Tools:** SQL · BigQuery · dbt · Python (pandas, statsmodels, matplotlib) ·
@@ -182,4 +182,4 @@ I'm **Adejori Eniola Emmanuel**, a data analyst working across the whole path
 from raw data to decision: modelling it, testing it, analysing it, and
 explaining what it means to the people who have to act on it.
 
-**[GitHub @aDataMage](https://github.com/aDataMage)** · **[LinkedIn](<your-linkedin-url>)** · **[Portfolio](<your-portfolio-url>)**
+**[GitHub @aDataMage](https://github.com/aDataMage)** · **[LinkedIn](https://www.linkedin.com/in/adejori-eniola/)** · **[Portfolio](https://adatamage.com)**

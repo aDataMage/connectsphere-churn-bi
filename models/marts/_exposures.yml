@@ -3,7 +3,8 @@ exposures:
   - name: churn_story_tableau
     label: Churn story (Tableau Story Points)
     type: dashboard
-    maturity: low
+    maturity: medium
+    url: https://public.tableau.com/views/telco_churn_17905093222320/ChurnStory
     description: >
       The linear, presented version of docs/story.md: one Story Point per
       exhibit, in the order age -> internet type -> contract -> first three
@@ -19,7 +20,8 @@ exposures:
   - name: churn_analytics_powerbi
     label: Churn analytics (Power BI)
     type: dashboard
-    maturity: low
+    maturity: medium
+    url: https://app.powerbi.com/view?r=eyJrIjoiMDA3ZTlhMDAtOTcxNi00NWRhLTgzMDgtYzNhNmY4NjEyZGQ5IiwidCI6IjQ2MTFmNDcxLTA4NWEtNGIwMC04YTMwLTZmYzU3MzRjYWM3NSJ9&pageName=c856c8a0c0924742a3e7
     description: >
       The self-directed analytical dashboard: landing, diagnostic and detail
       pages over a star schema, for slicing churn by any segment. Plan:

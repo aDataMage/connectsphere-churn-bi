@@ -123,7 +123,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="odd">
 <td><strong>What I built</strong></td>
-<td>A tested data pipeline (SQL, dbt, BigQuery), the statistical analysis (Python), a written data story, and the plans and data models for a Tableau story and a Power BI dashboard.</td>
+<td>A tested data pipeline (SQL, dbt, BigQuery), the statistical analysis (Python), a written data story, and a live Tableau story and Power BI dashboard.</td>
 </tr>
 <tr class="even">
 <td><strong>Data</strong></td>
@@ -150,13 +150,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td>📊</td>
-<td><strong>Tableau story</strong> — the same argument as a presented readout</td>
-<td><a href="docs/tableau_story_plan.md">Build plan</a> · data models built and tested</td>
+<td><strong><a href="https://public.tableau.com/views/telco_churn_17905093222320/ChurnStory">Tableau story</a></strong> — the same argument as a presented readout</td>
+<td>Live · <a href="docs/tableau_story_plan.md">build plan</a></td>
 </tr>
 <tr class="odd">
 <td>📈</td>
-<td><strong>Power BI dashboard</strong> — self-serve analysis for repeat use</td>
-<td><a href="docs/powerbi_dashboard_plan.md">Build plan</a> · data models built and tested</td>
+<td><strong><a href="https://app.powerbi.com/view?r=eyJrIjoiMDA3ZTlhMDAtOTcxNi00NWRhLTgzMDgtYzNhNmY4NjEyZGQ5IiwidCI6IjQ2MTFmNDcxLTA4NWEtNGIwMC04YTMwLTZmYzU3MzRjYWM3NSJ9&amp;pageName=c856c8a0c0924742a3e7">Power BI dashboard</a></strong> — self-serve analysis for repeat use</td>
+<td>Live · <a href="docs/powerbi_dashboard_plan.md">build plan</a></td>
 </tr>
 </tbody>
 </table>
@@ -168,7 +168,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><strong>I start from the decision, not the data.</strong> The story opens with what should be done, who owns it and by when. Every chart has to earn its place by moving that argument forward.</p>
 <p><strong>I test the obvious explanation before accepting it.</strong> Fiber is the premium product, so price looked like the answer. Comparing customers at the same monthly bill showed the opposite: the gap got <em>bigger</em>, not smaller. That one check turned the recommendation away from discounts.</p>
 <p><strong>I don’t let a good story outrun the evidence.</strong> The most striking number here — senior fiber customers on two-year contracts churn at 1.0% — rests on 2 people out of 197. The story says so. Every figure states which customers it covers, every gap has a confidence range, and I’m explicit that these are associations, not proven causes. That’s why the recommendations are tests, not rollouts.</p>
-<p><strong>I catch problems before they reach a dashboard.</strong> The source data marks “no internet” with the text <code>'none'</code> rather than leaving it blank. Standard null handling silently dropped <strong>1,274 customers</strong> until I traced it. I also wrote a check that fails loudly if the published numbers ever drift from the story’s.</p>
+<p><strong>I catch problems before they reach a dashboard.</strong> The source data marks “no internet” with the text <code>'none'</code> rather than leaving it blank. Standard null handling silently dropped <strong>1,274 customers</strong> from an analysis until I traced it. I also wrote a check that flags it the moment the published numbers drift from the story’s.</p>
 <p><strong>I match the format to the audience.</strong> The same analysis becomes three things: a written story for decision-makers, a linear Tableau readout for a meeting, and a Power BI dashboard for analysts who will return to it with their own questions.</p>
 <hr>
 </section>
@@ -203,8 +203,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td><a href="docs/img/"><code>docs/img/</code></a>, <a href="notebooks/story_charts.py"><code>notebooks/story_charts.py</code></a></td>
 </tr>
 <tr class="even">
-<td><strong>BI and dashboard design</strong> — Tableau and Power BI plans, DAX measures, themes</td>
-<td><a href="docs/tableau_story_plan.md">Tableau plan</a>, <a href="docs/powerbi_dashboard_plan.md">Power BI plan</a></td>
+<td><strong>BI and dashboard design</strong> — a Tableau story and a Power BI dashboard, DAX measures, themes</td>
+<td><a href="https://public.tableau.com/views/telco_churn_17905093222320/ChurnStory">Tableau story</a>, <a href="https://app.powerbi.com/view?r=eyJrIjoiMDA3ZTlhMDAtOTcxNi00NWRhLTgzMDgtYzNhNmY4NjEyZGQ5IiwidCI6IjQ2MTFmNDcxLTA4NWEtNGIwMC04YTMwLTZmYzU3MzRjYWM3NSJ9&amp;pageName=c856c8a0c0924742a3e7">Power BI dashboard</a></td>
 </tr>
 <tr class="odd">
 <td><strong>Documentation</strong> — every modelling decision and every analytical question logged</td>
